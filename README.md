@@ -98,12 +98,12 @@ openclaw channels status --channel yach-im-full
 
 如果显式把 `groupPolicy` 改为 `open`，OpenClaw 标准安全审计会显示群开放风险提示；生产环境应保持 `allowlist` 并填写 `groupAllowFrom`。
 
-## 安装 `2026.9.4-5`
+## 安装 `2026.9.4-6`
 
-手工安装包：`tal-yach-im-full-2026.9.4-5.tgz`。
+手工安装包：`tal-yach-im-full-2026.9.4-6.tgz`。
 
 ```bash
-openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-5.tgz --force --accept-capabilities
+openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-6.tgz --force --accept-capabilities
 openclaw channels add --channel yach-im-full --app-key '<appKey>' --app-secret '<appSecret>'
 openclaw config validate
 openclaw channels list --all

@@ -1,6 +1,6 @@
 {
   "name": "@tal/yach-im-full",
-  "version": "2026.9.4-5",
+  "version": "2026.9.4-6",
   "description": "OpenClaw Yach IM (知音楼) channel with QR login and NIM long connection",
   "type": "module",
   "main": "./dist/index.js",
