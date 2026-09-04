@@ -103,6 +103,7 @@ const CONNECT_TIMEOUT_MS = 15_000;
 
 let _nim = null;
 let _connecting = null;
+let nimBrowserGlobalsHeld = false;
 
 /**
  * 获取（或创建）NIM 单例，连接成功后 resolve
@@ -125,6 +126,8 @@ function getNim() {
       if (settled) return;
       settled = true;
       try { nim.destroy({ done() {} }); } catch {}
+      nimBrowserGlobalsHeld = false;
+      restoreGlobals();
       reject(new Error(`NIM connect timeout after ${CONNECT_TIMEOUT_MS}ms`));
     }, CONNECT_TIMEOUT_MS);
     const finish = (fn, value) => {
@@ -152,6 +155,8 @@ function getNim() {
       },
       ondisconnect(err) {
         _nim = null;
+        restoreGlobals();
+        nimBrowserGlobalsHeld = false;
         const msg = err ? `${err.code || ''} ${err.message || ''}` : 'disconnected';
         finish(reject, new Error('NIM disconnect: ' + msg));
       },
@@ -160,12 +165,19 @@ function getNim() {
         console.error('[NIM] error:', msg);
       },
         });
-      } finally {
+      } catch (error) {
         restoreGlobals();
+        nimBrowserGlobalsHeld = false;
+        throw error;
       }
     })();
+    nimBrowserGlobalsHeld = true;
   }).finally(() => {
     _connecting = null;
+    if (!_nim) {
+      nimBrowserGlobalsHeld = false;
+      restoreGlobals();
+    }
   });
   return _connecting;
 }
@@ -175,6 +187,7 @@ function getNim() {
  */
 function destroyNim() {
   if (_nim) { _nim.destroy(); _nim = null; }
+  nimBrowserGlobalsHeld = false;
   restoreGlobals();
 }
 
