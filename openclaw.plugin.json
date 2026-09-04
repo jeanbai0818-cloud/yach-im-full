@@ -2,7 +2,7 @@
   "id": "yach-im-full",
   "name": "Yach IM Full",
   "description": "知音楼企业 IM 聊天通道，支持扫码登录和 NIM 长连接",
-  "version": "2026.9.4-11",
+  "version": "2026.9.4-12",
   "channels": [
     "yach-im-full"
   ],
@@ -1385,19 +1385,19 @@
             "type": "boolean"
           }
         }
-      },
-      "configContracts": {
-        "secretInputs": {
-          "bundledDefaultEnabled": false,
-          "paths": [
-            {
-              "path": "payrollAdminToken",
-              "expected": "string",
-              "ownerKind": "capability"
-            }
-          ]
-        }
       }
+    }
+  },
+  "configContracts": {
+    "secretInputs": {
+      "bundledDefaultEnabled": false,
+      "paths": [
+        {
+          "path": "payrollAdminToken",
+          "expected": "string",
+          "ownerKind": "capability"
+        }
+      ]
     }
   },
   "channelConfigs": {

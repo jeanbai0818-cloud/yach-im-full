@@ -104,12 +104,12 @@ openclaw channels status --channel yach-im-full
 
 `yach_punch_on_duty`、`yach_punch_off_duty` 和 `yach_attendance_auth_check` 保留在完整工具集中，但每次都要求调用方显式提供本次真实 `latitude`、`longitude`、`deviceId` 和 `deviceName`；插件只把坐标交给知音楼服务端校验，不生成坐标、不读取主机硬件标识、不构造设备身份。考勤 access_token 只在当前 Gateway 进程内短期复用，不写入本地文件。两种打卡仍属于高风险外部写操作，必须经过 OpenClaw 逐次确认。
 
-## 安装 `2026.9.4-11`
+## 安装 `2026.9.4-12`
 
-手工安装包：`tal-yach-im-full-2026.9.4-11.tgz`。
+手工安装包：`tal-yach-im-full-2026.9.4-12.tgz`。
 
 ```bash
-openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-11.tgz --force --accept-capabilities
+openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-12.tgz --force --accept-capabilities
 openclaw channels add --channel yach-im-full --app-key '<appKey>' --app-secret '<appSecret>'
 openclaw config validate
 openclaw channels list --all
