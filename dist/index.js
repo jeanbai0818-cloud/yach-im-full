@@ -13,6 +13,7 @@ export default defineChannelPluginEntry({
         additionalProperties: false,
         properties: {
             sessionPath: { type: "string", description: "可选：yach-im-full session.json 的绝对路径" },
+            payrollAdminToken: { type: "string", description: "可选：工资条 admin_token；建议使用 OpenClaw SecretRef" },
             nimEnabled: { type: "boolean", default: true },
             autoStartNim: { type: "boolean", default: true },
             responsePolicy: {

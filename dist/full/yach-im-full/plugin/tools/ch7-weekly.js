@@ -578,7 +578,7 @@ export const yachGetAttendanceInfo = {
 export const yachRefreshPayrollToken = {
     name: "yach_refresh_payroll_token",
     label: "提取工资条 Token",
-    description: "检查显式配置的工资条 admin_token（SecretRef 或环境变量 YACH_IM_FULL_PAYROLL_ADMIN_TOKEN）。不读取本机应用/浏览器凭据，不回显或写入本地文件；这是敏感凭据操作，执行前需用户确认。",
+    description: "检查 yach-im-full 配置中由 OpenClaw SecretRef 提供的工资条 admin_token。不读取本机应用/浏览器凭据，不回显或写入本地文件；这是敏感凭据操作，执行前需用户确认。",
     parameters: Type.Object({}),
     async execute(_id, _params) {
         const require = createRequire(import.meta.url);

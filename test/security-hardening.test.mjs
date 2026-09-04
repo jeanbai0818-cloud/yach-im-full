@@ -13,15 +13,13 @@ const { yachPunchOnDuty, yachAttendanceAuthCheck } = await import("../dist/full/
 
 test("发布运行时不包含本机工资条凭据抓取路径", async () => {
   const source = await fs.readFile(path.join(root, "dist/full/yach-im-full/api/ch7-workbench/payroll/index.js"), "utf8");
-  assert.doesNotMatch(source, /Cookies\.binarycookies|spawnSync|child_process|extractFromBinaryCookies/u);
+  assert.doesNotMatch(source, /Cookies\.binarycookies|spawnSync|child_process|extractFromBinaryCookies|process\.env|YACH_IM_FULL_PAYROLL_ADMIN_TOKEN/u);
   assert.equal(typeof payroll.extractFromBinaryCookies, "undefined");
-  const previous = process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
-  delete process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
+  payroll.configurePayrollToken("");
   try {
-    await assert.rejects(() => payroll.refreshPayrollToken(), /YACH_IM_FULL_PAYROLL_ADMIN_TOKEN/u);
+    await assert.rejects(() => payroll.refreshPayrollToken(), /payrollAdminToken/u);
   } finally {
-    if (previous === undefined) delete process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
-    else process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN = previous;
+    payroll.configurePayrollToken("");
   }
 });
 
@@ -52,14 +50,12 @@ test("辅助系统会话只在进程内缓存，不写本机 Cookie/token 文件
 test("工资条检查不持久化 token", async () => {
   const payload = Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, sub: 1, iss: "payroll-api.zhiyinlou.com" })).toString("base64url");
   const token = `eyJ.${payload}.sig`;
-  const previous = process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
-  process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN = token;
+  payroll.configurePayrollToken(token);
   try {
     const result = await payroll.refreshPayrollToken();
     assert.equal(result.token, "已配置（不回显）");
     assert.equal(payroll.getConfiguredPayrollToken(), token);
   } finally {
-    if (previous === undefined) delete process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
-    else process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN = previous;
+    payroll.configurePayrollToken("");
   }
 });

@@ -4,8 +4,8 @@
  * ⚠️ 认证特殊说明：
  *   payroll-api 域名做了 Certificate Pinning，与 yach-capi 完全独立。
  *   认证走 JWT（admin_token），有效期 1 小时；本插件只接受
- *   YACH_IM_FULL_PAYROLL_ADMIN_TOKEN 环境变量中的显式配置，不读取浏览器、桌面
- *   应用或系统 Cookie，也不会把工资条凭据写入 session 或其他本地文件。
+ *   yach-im-full 插件配置中的 payrollAdminToken（建议使用 SecretRef），不读取
+ *   浏览器、桌面应用或系统 Cookie，也不会把工资条凭据写入 session 或其他本地文件。
  *
  * 实测接口（2026-07-14）：
  *   POST api/ding/payroll       ✅ 当月/翻页工资条详情（核心接口）
@@ -26,6 +26,7 @@ const PAYROLL_ORIGIN = 'https://payroll.zhiyinlou.com';
 // 知音楼 iPad 渠道 = 2，AppID = 372229400
 const YACH_CHANNEL = '2';
 const YACH_APPID = '372229400';
+let configuredPayrollToken = '';
 
 // ── token 管理 ─────────────────────────────────────────────────────────────
 
@@ -35,13 +36,21 @@ function getAdminToken() {
   if (token && isTokenValid(token)) return token;
   throw new Error(
     '工资条凭据缺失或已过期（admin_token 有效期约 1 小时）。\n' +
-    '请由管理员通过受控 SecretRef 或环境变量 YACH_IM_FULL_PAYROLL_ADMIN_TOKEN 配置，' +
+    '请由管理员在 yach-im-full 插件配置中通过受控 SecretRef 配置 payrollAdminToken，' +
     '然后再调用 yach_refresh_payroll_token。插件不会读取本机应用、浏览器或系统凭据文件。'
   );
 }
 
+/**
+ * 由 OpenClaw Gateway 注入已经解析的 SecretRef 值。
+ * 该模块只在进程内短暂保存，不落盘、不回写配置。
+ */
+function configurePayrollToken(value) {
+  configuredPayrollToken = typeof value === 'string' ? value.trim() : '';
+}
+
 function getConfiguredPayrollToken() {
-  return String(process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN || '').trim();
+  return configuredPayrollToken;
 }
 
 /**
@@ -93,7 +102,7 @@ function payrollPost(path, body = {}) {
       res.on('end', () => {
         const raw = Buffer.concat(chunks).toString('utf8');
         if (res.statusCode === 401) {
-          reject(new Error('payroll admin_token 已过期，请更新受控配置 YACH_IM_FULL_PAYROLL_ADMIN_TOKEN'));
+          reject(new Error('payroll admin_token 已过期，请更新 yach-im-full 配置中的 payrollAdminToken'));
           return;
         }
         if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -167,8 +176,8 @@ async function refreshPayrollToken() {
   const token = getConfiguredPayrollToken();
   if (!token || !isTokenValid(token)) {
     throw new Error(
-      '未配置有效的工资条 admin_token。请通过 SecretRef 或环境变量 ' +
-      'YACH_IM_FULL_PAYROLL_ADMIN_TOKEN 显式提供；不会自动读取本机应用或浏览器凭据。'
+      '未配置有效的工资条 admin_token。请在 yach-im-full 插件配置中通过 SecretRef ' +
+      '显式提供 payrollAdminToken；不会自动读取本机应用或浏览器凭据。'
     );
   }
   const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
@@ -257,6 +266,7 @@ module.exports = {
   getPayrollList,
   getPayrollHistory,
   // 内部工具（供测试用）
+  configurePayrollToken,
   getAdminToken,
   getConfiguredPayrollToken,
   isTokenValid,

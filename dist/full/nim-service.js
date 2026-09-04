@@ -20,6 +20,8 @@ function pluginConfig(ctx) {
 
 function configurePaths(ctx) {
   const config = pluginConfig(ctx);
+  const { configurePayrollToken } = require("./yach-im-full/api/ch7-workbench/payroll/index.js");
+  configurePayrollToken(config.payrollAdminToken);
   serviceStateDir = path.join(ctx.stateDir, "yach-im-full");
   fs.mkdirSync(serviceStateDir, { recursive: true, mode: 0o700 });
   process.env.YACH_IM_FULL_STATE_DIR = serviceStateDir;
@@ -100,6 +102,8 @@ export const nimService = {
   async stop(ctx) {
     serviceStopping = true;
     stopActiveListener();
+    const { configurePayrollToken } = require("./yach-im-full/api/ch7-workbench/payroll/index.js");
+    configurePayrollToken("");
     serviceContext = null;
     delete process.env.YACH_IM_FULL_STATE_DIR;
     delete process.env.YACH_IM_FULL_SESSION_PATH;

@@ -2,7 +2,7 @@
   "id": "yach-im-full",
   "name": "Yach IM Full",
   "description": "知音楼企业 IM 聊天通道，支持扫码登录和 NIM 长连接",
-  "version": "2026.9.4-10",
+  "version": "2026.9.4-11",
   "channels": [
     "yach-im-full"
   ],
@@ -1310,6 +1310,10 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
+      "payrollAdminToken": {
+        "type": "string",
+        "description": "可选：工资条 admin_token；建议使用 OpenClaw SecretRef"
+      },
       "sessionPath": {
         "type": "string",
         "description": "可选：yach-im-full session.json 的绝对路径"
@@ -1380,6 +1384,18 @@
           "respondToBots": {
             "type": "boolean"
           }
+        }
+      },
+      "configContracts": {
+        "secretInputs": {
+          "bundledDefaultEnabled": false,
+          "paths": [
+            {
+              "path": "payrollAdminToken",
+              "expected": "string",
+              "ownerKind": "capability"
+            }
+          ]
         }
       }
     }
