@@ -8,7 +8,6 @@ const DEFAULT_MAX_BYTES = 100 * 1024 * 1024;
 
 function parseConfiguredRoots() {
   const roots = [];
-  if (process.env.YACH_IM_FULL_STATE_DIR) roots.push(process.env.YACH_IM_FULL_STATE_DIR);
   if (process.env.YACH_STATE_DIR) roots.push(process.env.YACH_STATE_DIR);
   if (process.env.YACH_FILE_ROOTS) {
     roots.push(...process.env.YACH_FILE_ROOTS.split(path.delimiter).filter(Boolean));

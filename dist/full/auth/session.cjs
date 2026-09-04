@@ -1,9 +1,10 @@
 /** yach-im-full 专属登录态存储。 */
 'use strict';
 
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
+// Credentials are persisted by OpenClaw's plugin-state store. The plugin never
+// reads a shared session file, browser profile, keychain, or another app's data.
+const SESSION_KEY = 'default';
+const SESSION_LOCATION = 'openclaw-state://plugin/yach-im-full/nim-session/default';
 
 const EMPTY_SESSION = {
   token: '',
@@ -15,66 +16,56 @@ const EMPTY_SESSION = {
   user: {},
 };
 
-function candidatePaths() {
-  const paths = [];
-  if (process.env.YACH_IM_FULL_SESSION_PATH) paths.push(path.resolve(process.env.YACH_IM_FULL_SESSION_PATH));
-  if (process.env.YACH_IM_FULL_STATE_DIR) {
-    paths.push(path.join(process.env.YACH_IM_FULL_STATE_DIR, 'sessions', 'session.json'));
-  } else if (!paths.length) {
-    paths.push(path.join(os.homedir(), '.openclaw', 'workspace-yach-im-full', 'sessions', 'session.json'));
+let sessionStore = null;
+
+function configureSessionStore(store) {
+  if (!store || typeof store.lookup !== 'function' || typeof store.register !== 'function') {
+    throw new TypeError('yach-im-full 需要 OpenClaw plugin-state store（lookup/register）。');
   }
-  const openClawSession = process.env.YACH_IM_FULL_OPENCLAW_SESSION_PATH
-    ? path.resolve(process.env.YACH_IM_FULL_OPENCLAW_SESSION_PATH)
-    : process.env.YACH_IM_FULL_STATE_DIR
-      ? path.join(path.dirname(process.env.YACH_IM_FULL_STATE_DIR), 'sessions', 'session.json')
-      : path.join(os.homedir(), '.openclaw', 'sessions', 'session.json');
-  if (!paths.includes(openClawSession)) paths.push(openClawSession);
-  return paths;
+  sessionStore = store;
+  return store;
 }
 
-function loadSession() {
-  const paths = candidatePaths();
-  for (const [index, file] of paths.entries()) {
-    if (!fs.existsSync(file)) continue;
-    try {
-      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
-      // The shared OpenClaw session is a compatibility source for NIM only.
-      // Never hand its HTTP/CAPI credentials or unrelated fields to this plugin.
-      if (index > 0) {
-        return {
-          cloudtoken: typeof parsed?.cloudtoken === 'string' ? parsed.cloudtoken : '',
-          user: {
-            id: parsed?.user?.id == null ? '' : String(parsed.user.id),
-            name: typeof parsed?.user?.name === 'string' ? parsed.user.name : '',
-            name_nick: typeof parsed?.user?.name_nick === 'string' ? parsed.user.name_nick : '',
-          },
-        };
-      }
-      return parsed;
-    } catch (error) {
-      throw new Error(`yach-im-full session 文件损坏或不可读：${file}（${error.message}）`);
-    }
-  }
+function clearSessionStore() {
+  sessionStore = null;
+}
+
+function emptySession() {
   return { ...EMPTY_SESSION, user: {} };
 }
 
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function loadSession() {
+  if (!sessionStore) return emptySession();
+  const value = sessionStore.lookup(SESSION_KEY);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return emptySession();
+  return { ...emptySession(), ...cloneJson(value), user: { ...(value.user || {}) } };
+}
+
 function saveSession(data) {
-  const file = candidatePaths()[0];
-  fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
-  try { fs.chmodSync(path.dirname(file), 0o700); } catch {}
-  const temp = `${file}.${process.pid}.${Date.now()}.tmp`;
-  try {
-    fs.writeFileSync(temp, `${JSON.stringify(data, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
-    fs.renameSync(temp, file);
-    fs.chmodSync(file, 0o600);
-  } catch (error) {
-    try { fs.unlinkSync(temp); } catch {}
-    throw error;
+  if (!sessionStore) {
+    throw new Error('yach-im-full 尚未连接 OpenClaw plugin-state store；请先启动 Gateway。');
   }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new TypeError('yach-im-full 登录态必须是 JSON 对象。');
+  }
+  sessionStore.register(SESSION_KEY, cloneJson(data));
 }
 
 function resolvedSessionPath() {
-  return candidatePaths().find((file) => fs.existsSync(file)) || null;
+  if (!sessionStore || !sessionStore.lookup(SESSION_KEY)) return null;
+  return SESSION_LOCATION;
 }
 
-module.exports = { candidatePaths, loadSession, saveSession, resolvedSessionPath };
+module.exports = {
+  SESSION_KEY,
+  SESSION_LOCATION,
+  clearSessionStore,
+  configureSessionStore,
+  loadSession,
+  saveSession,
+  resolvedSessionPath,
+};

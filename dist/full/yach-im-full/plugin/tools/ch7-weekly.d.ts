@@ -322,34 +322,4 @@ export declare const yachGetAttendanceInfo: {
     parameters: Type.TObject<{}>;
     execute(_id: string, _params: any): Promise<ToolResult>;
 };
-/** ⭐ 检查工资条 admin_token（仅使用显式受控配置）*/
-export declare const yachRefreshPayrollToken: {
-    name: string;
-    label: string;
-    description: string;
-    parameters: Type.TObject<{}>;
-    execute(_id: string, _params: any): Promise<ToolResult>;
-};
-/** ⭐ 查工资条（当月/翻页）*/
-export declare const yachGetPayroll: {
-    name: string;
-    label: string;
-    description: string;
-    parameters: Type.TObject<{
-        page: Type.TOptional<Type.TUnion<[Type.TLiteral<"C">, Type.TLiteral<"P">, Type.TLiteral<"N">]>>;
-        calId: Type.TOptional<Type.TString>;
-    }>;
-    execute(_id: string, params: any): Promise<ToolResult>;
-};
-/** ⭐ 批量查历史工资条（自动翻页）*/
-export declare const yachGetPayrollHistory: {
-    name: string;
-    label: string;
-    description: string;
-    parameters: Type.TObject<{
-        months: Type.TOptional<Type.TInteger>;
-    }>;
-    execute(_id: string, params: any): Promise<ToolResult>;
-};
 export {};
-//# sourceMappingURL=ch7-weekly.d.ts.map

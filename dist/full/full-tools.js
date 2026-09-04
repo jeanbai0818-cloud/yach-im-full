@@ -1,4 +1,4 @@
-// The complete tool index is imported once so the 287-tool registry cannot
+// The complete tool index is imported once so the 284-tool registry cannot
 // drift when a new migrated domain is added. Each descriptor remains lazy:
 // its business API is loaded by execute(), not during plugin discovery.
 import * as allTools from "./yach-im-full/plugin/tools/index.js";
@@ -46,7 +46,6 @@ for (const name of [
     "yach_intelloft_vote",
     "yach_change_intelloft_option",
     "yach_sort_session_top",
-    "yach_refresh_payroll_token",
 ]) {
     sideEffectingToolNames.add(name);
 }

@@ -13,7 +13,7 @@
 它们是两套独立连接，共存于同一个 Gateway 进程：
 
 - Channel SDK 长连接：使用 `appKey/appSecret`，负责机器人频道的入站消息；出站仍使用 Yach OAPI。
-- NIM WebSocket 长连接：优先复用 `yach-im-full` session 或本机 OpenClaw 共用 session 中的 `user.id` 和 `cloudtoken`，使用固定 NIM appKey 建立人对人/群聊连接；已有有效 NIM 凭据时不需要扫码。
+- NIM WebSocket 长连接：只读取 `yach-im-full` 自己的 OpenClaw plugin-state 中的 `user.id` 和 `cloudtoken`，使用固定 NIM appKey 建立人对人/群聊连接；已有有效 NIM 凭据时不需要扫码。
 
 迁移工具和自动响应都从同一个 `NimListener`/NIM SDK 实例执行，不会重复建立同账号的第二个 NIM client。
 
@@ -32,7 +32,7 @@ npm run pack:check
 runtime 入口，并配套 `setupEntry`/`runtimeSetupEntry`。二维码登录、NIM SDK 和浏览器
 兼容层只在 full runtime 或实际执行登录命令时延迟加载。
 
-好未来 Agent 项目的 36 个业务域已全部迁移到 `yach-im-full`：共 287 个唯一 Agent 工具，覆盖即时通信、群组组织、日程会议、文档知识库、文件、考勤、OKR/周报、AI、搜索提醒、企业邮件和开放平台能力。
+好未来 Agent 项目的 36 个业务域已全部迁移到 `yach-im-full`：共 284 个唯一 Agent 工具，覆盖即时通信、群组组织、日程会议、文档知识库、文件、考勤、OKR/周报、AI、搜索提醒、企业邮件和开放平台能力。
 
 迁移范围包含参考工程 capability map 中的全部 36 个业务域；完整的工具名、来源模块和副作用标记见自动生成的 [`docs/CAPABILITY-MAP.md`](docs/CAPABILITY-MAP.md)。
 
@@ -61,8 +61,6 @@ runtime 入口，并配套 `setupEntry`/`runtimeSetupEntry`。二维码登录、
 
 多账号配置使用 `channels["yach-im-full"].accounts.<accountId>`。`connectionMode` 固定为 `channel`；`appKey/appSecret` 支持明文或 OpenClaw `SecretRef`。密钥只在 Gateway `full` 运行时解析，Discovery 和 setup-only 阶段不会建立网络连接。
 
-工资条能力是显式配置的可选能力：在 `plugins.entries.yach-im-full.config.payrollAdminToken` 配置短期 admin_token，建议使用 OpenClaw `SecretRef`。Gateway 解析后只在插件进程内使用，不读取本机应用、浏览器或系统凭据文件，不写入 yach-im-full session。未配置时，`yach_refresh_payroll_token` 会明确提示配置缺失并停止。
-
 安装后使用标准向导，不需要手动编辑配置文件：
 
 ```bash
@@ -80,7 +78,7 @@ openclaw channels status --channel yach-im-full
 /yach_login
 ```
 
-命令会返回二维码并在后台轮询 60 秒；成功后 session 保存在 Gateway stateDir 下的 `yach-im-full/sessions/session.json`（权限 600），并立即尝试启动 NIM。插件自己的 session 不存在时，只读复用 OpenClaw 共用 session 中的 `user.id`、显示名和 `cloudtoken` 三个 NIM 字段；不会读取其中的 HTTP/CAPI 凭据，也不会写回共用文件。已有 `user.id + cloudtoken` 时，NIM 直接启动，不会要求扫码；两处都没有有效 NIM 登录态，或 HTTP/CAPI `token/accesstoken` 已失效时，才提示执行 `/yach_login`。用 `/yach_status` 查看进度；需要时用 `/yach-refresh-token` 刷新仍有效的登录态。
+命令会返回二维码并在后台轮询 60 秒；成功后登录态写入 OpenClaw 为 `yach-im-full` 隔离的 plugin-state SQLite 命名空间 `nim-session/default`，并立即尝试启动 NIM。OKR 换票态同样写入 `okr-session/default`。插件不读取共享 session、浏览器 Cookie、系统钥匙串或其他 App 的凭据文件。已有 `user.id + cloudtoken` 时，NIM 直接启动，不会要求扫码；没有有效 NIM 登录态，或 HTTP/CAPI `token/accesstoken` 已失效时，才提示执行 `/yach_login`。用 `/yach_status` 查看进度；需要时用 `/yach-refresh-token` 刷新仍有效的登录态。
 
 ### 群聊默认行为
 
@@ -183,11 +181,11 @@ openclaw config validate
 
 ### 合规运行时约束
 
-- 287 个迁移工具全部保留在 `contracts.tools`；涉及消息发送、组织修改、考勤写卡或敏感工资条凭据检查的工具标记为 `sideEffecting` 并要求显式确认，查询组织/消息/会话等敏感工具要求通过 `tools.allow` 显式启用。
+- 284 个迁移工具全部保留在 `contracts.tools`；涉及消息发送、组织修改或考勤写卡的工具标记为 `sideEffecting` 并要求显式确认，查询组织/消息/会话等敏感工具要求通过 `tools.allow` 显式启用。
 - `tool-discovery` 只发布工具能力，不启动 NIM、后台 service 或 HTTP 路由；setup 入口使用 bundled setup contract，不加载 Channel SDK/OAPI/NIM 运行时。
 - 入站消息在进入 OpenClaw context 前经过官方 channel ingress resolver；私聊默认 pairing，群聊默认 allowlist。
-- `/plugin/yach-im-full/*` 路由统一使用 Gateway 认证；二维码登录和 session 文件只属于 `yach-im-full`，不读取旧 `haoweilai-agent` session。
-- 工资条 admin_token 不从本机 Cookie/浏览器存储提取，也不写入 session；考勤坐标和设备字段必须由调用方显式提供并由服务端校验。
+- `/plugin/yach-im-full/*` 路由统一使用 Gateway 认证；二维码登录和登录态只属于 `yach-im-full` 的 `nim-session` plugin-state 命名空间，不读取任何共享 session。
+- NIM 和 OKR 凭据由 OpenClaw plugin-state 托管，插件只使用自己的命名空间；不读取本机 Cookie、浏览器存储、系统钥匙串或其他 App 数据。考勤坐标和设备字段必须由调用方显式提供并由服务端校验。
 
 ## 迁移分析
 

@@ -1,6 +1,4 @@
 import { createRequire } from "node:module";
-import path from "node:path";
-import fs from "node:fs";
 
 const require = createRequire(import.meta.url);
 const { NimListener } = require("./nim/nim-listener.cjs");
@@ -8,7 +6,6 @@ const { loadSession } = require("./auth/session.cjs");
 const nimBridge = require("./nim-bridge.cjs");
 
 let serviceContext = null;
-let serviceStateDir = null;
 let activeListener = null;
 let activeResponder = null;
 let serviceStopping = false;
@@ -16,18 +13,6 @@ let serviceStopping = false;
 function pluginConfig(ctx) {
   const config = ctx?.config ?? {};
   return config.plugins?.entries?.["yach-im-full"]?.config ?? {};
-}
-
-function configurePaths(ctx) {
-  const config = pluginConfig(ctx);
-  const { configurePayrollToken } = require("./yach-im-full/api/ch7-workbench/payroll/index.js");
-  configurePayrollToken(config.payrollAdminToken);
-  serviceStateDir = path.join(ctx.stateDir, "yach-im-full");
-  fs.mkdirSync(serviceStateDir, { recursive: true, mode: 0o700 });
-  process.env.YACH_IM_FULL_STATE_DIR = serviceStateDir;
-  if (config.sessionPath) process.env.YACH_IM_FULL_SESSION_PATH = path.resolve(String(config.sessionPath));
-  else delete process.env.YACH_IM_FULL_SESSION_PATH;
-  return config;
 }
 
 function stopActiveListener() {
@@ -95,18 +80,14 @@ export const nimService = {
   async start(ctx) {
     serviceContext = ctx;
     serviceStopping = false;
-    const config = configurePaths(ctx);
+    const config = pluginConfig(ctx);
     if (config.nimEnabled !== false && config.autoStartNim !== false) await startActiveListener(ctx);
     else ctx.logger.info?.("[yach-im-full][nim] NIM 自动连接已关闭");
   },
   async stop(ctx) {
     serviceStopping = true;
     stopActiveListener();
-    const { configurePayrollToken } = require("./yach-im-full/api/ch7-workbench/payroll/index.js");
-    configurePayrollToken("");
     serviceContext = null;
-    delete process.env.YACH_IM_FULL_STATE_DIR;
-    delete process.env.YACH_IM_FULL_SESSION_PATH;
   },
 };
 

@@ -1,18 +1,20 @@
-/**
- * OKR Bearer token 缓存（独立于知音楼主 token）
- * 存于主 session 同目录 okr-session.json（chmod 600, gitignored）。
- */
+/** OKR Bearer token cache in the yach-im-full-owned OpenClaw plugin state. */
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-const { candidatePaths } = require('../../../auth/session');
+const OKR_SESSION_KEY = 'default';
+const OKR_SESSION_LOCATION = 'openclaw-state://plugin/yach-im-full/okr-session/default';
+let okrSessionStore = null;
 
-function okrSessionPath() {
-  return path.join(path.dirname(candidatePaths()[0]), 'okr-session.json');
+function configureOkrSessionStore(store) {
+  if (!store || typeof store.lookup !== 'function' || typeof store.register !== 'function') {
+    throw new TypeError('yach-im-full OKR 需要 OpenClaw plugin-state store（lookup/register）。');
+  }
+  okrSessionStore = store;
+  return store;
 }
-function okrSessionCandidates() {
-  return candidatePaths().map((p) => path.join(path.dirname(p), 'okr-session.json'));
+
+function clearOkrSessionStore() {
+  okrSessionStore = null;
 }
 
 function isValid(v) {
@@ -27,31 +29,25 @@ function isValid(v) {
 }
 
 function readStoredOkrSession() {
-  for (const p of okrSessionCandidates()) {
-    try {
-      if (p && fs.existsSync(p)) {
-        const parsed = JSON.parse(fs.readFileSync(p, 'utf8'));
-        if (isValid(parsed)) return parsed;
-      }
-    } catch {
-      /* next */
-    }
-  }
-  return null;
+  if (!okrSessionStore) return null;
+  const value = okrSessionStore.lookup(OKR_SESSION_KEY);
+  return isValid(value) ? JSON.parse(JSON.stringify(value)) : null;
 }
 
 function writeStoredOkrSession(session) {
-  const p = okrSessionPath();
-  fs.mkdirSync(path.dirname(p), { recursive: true });
-  const tmp = `${p}.${process.pid}.${Date.now()}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(session, null, 2)}\n`, { mode: 0o600 });
-  fs.renameSync(tmp, p);
-  try {
-    fs.chmodSync(p, 0o600);
-  } catch {
-    /* best effort */
+  if (!okrSessionStore) {
+    throw new Error('yach-im-full OKR 尚未连接 OpenClaw plugin-state store；请先启动 Gateway。');
   }
-  return p;
+  if (!isValid(session)) throw new Error('OKR session 格式无效。');
+  okrSessionStore.register(OKR_SESSION_KEY, JSON.parse(JSON.stringify(session)));
+  return OKR_SESSION_LOCATION;
 }
 
-module.exports = { okrSessionPath, readStoredOkrSession, writeStoredOkrSession };
+module.exports = {
+  OKR_SESSION_KEY,
+  OKR_SESSION_LOCATION,
+  clearOkrSessionStore,
+  configureOkrSessionStore,
+  readStoredOkrSession,
+  writeStoredOkrSession,
+};

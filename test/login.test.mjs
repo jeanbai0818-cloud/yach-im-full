@@ -10,6 +10,20 @@ const loginApi = require("../dist/full/auth/login.cjs");
 const requestApi = require("../dist/full/auth/request.cjs");
 const sessionApi = require("../dist/full/auth/session.cjs");
 
+function memoryStore(initial) {
+  let value = initial === undefined ? undefined : structuredClone(initial);
+  return {
+    register(key, next) {
+      assert.equal(key, "default");
+      value = structuredClone(next);
+    },
+    lookup(key) {
+      assert.equal(key, "default");
+      return value === undefined ? undefined : structuredClone(value);
+    },
+  };
+}
+
 test("公共登录请求不携带旧 session 凭证", () => {
   const headers = requestApi.buildPublicHeaders("signed", 123, {});
   assert.equal(headers.Authorization, undefined);
@@ -21,49 +35,49 @@ test("公共登录请求不携带旧 session 凭证", () => {
   assert.equal(headers.os, "mac");
 });
 
-test("session reader 只使用 yach-im-full 专属路径", () => {
-  const previousSessionPath = process.env.YACH_IM_FULL_SESSION_PATH;
-  const previous = process.env.YACH_IM_FULL_STATE_DIR;
-  delete process.env.YACH_IM_FULL_SESSION_PATH;
-  process.env.YACH_IM_FULL_STATE_DIR = "/tmp/yach-im-full-only-state";
+test("session reader 只使用 yach-im-full 专属 OpenClaw plugin-state", () => {
+  const store = memoryStore();
+  sessionApi.configureSessionStore(store);
   try {
-    const paths = sessionApi.candidatePaths();
-    assert.deepEqual(paths, [
-      "/tmp/yach-im-full-only-state/sessions/session.json",
-      "/tmp/sessions/session.json",
-    ]);
-    assert.equal(paths.some((file) => /haoweilai-agent|(?:^|[\\/])yach-im(?:[\\/]|$)/u.test(file)), false);
+    assert.deepEqual(sessionApi.loadSession(), {
+      token: "",
+      accesstoken: "",
+      uid: "",
+      workcode: "",
+      deptid: "",
+      cloudtoken: "",
+      user: {},
+    });
+    assert.equal(sessionApi.resolvedSessionPath(), null);
+    assert.equal(sessionApi.SESSION_LOCATION, "openclaw-state://plugin/yach-im-full/nim-session/default");
   } finally {
-    if (previousSessionPath === undefined) delete process.env.YACH_IM_FULL_SESSION_PATH;
-    else process.env.YACH_IM_FULL_SESSION_PATH = previousSessionPath;
-    if (previous === undefined) delete process.env.YACH_IM_FULL_STATE_DIR;
-    else process.env.YACH_IM_FULL_STATE_DIR = previous;
+    sessionApi.clearSessionStore();
   }
 });
 
-test("session reader 可复用 OpenClaw 共用 session，但新登录仍写入 full 路径", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "yach-im-full-shared-session-"));
-  const previous = process.env.YACH_IM_FULL_STATE_DIR;
-  process.env.YACH_IM_FULL_STATE_DIR = path.join(dir, "yach-im-full");
-  const shared = path.join(dir, "sessions", "session.json");
-  fs.mkdirSync(path.dirname(shared), { recursive: true });
-  fs.writeFileSync(shared, JSON.stringify({
-    token: "must-not-cross-boundary",
-    accesstoken: "must-not-cross-boundary",
-    cloudtoken: "shared-nim-token",
-    user: { id: "438470", name: "NIM user" },
-    unrelated: "must-not-cross-boundary",
-  }));
+test("session reader 不回退到共享 session、环境变量或其他插件", () => {
+  const store = memoryStore();
+  sessionApi.configureSessionStore(store);
+  const oldValues = {
+    sessionPath: process.env.YACH_IM_FULL_SESSION_PATH,
+    stateDir: process.env.YACH_IM_FULL_STATE_DIR,
+    openClawPath: process.env.YACH_IM_FULL_OPENCLAW_SESSION_PATH,
+  };
+  process.env.YACH_IM_FULL_SESSION_PATH = "/tmp/not-read/session.json";
+  process.env.YACH_IM_FULL_STATE_DIR = "/tmp/not-read";
+  process.env.YACH_IM_FULL_OPENCLAW_SESSION_PATH = "/tmp/not-read/shared.json";
   try {
-    assert.deepEqual(sessionApi.loadSession(), {
-      cloudtoken: "shared-nim-token",
-      user: { id: "438470", name: "NIM user", name_nick: "" },
-    });
-    assert.equal(sessionApi.candidatePaths()[0], path.join(dir, "yach-im-full", "sessions", "session.json"));
+    assert.equal(sessionApi.loadSession().cloudtoken, "");
+    sessionApi.saveSession({ cloudtoken: "plugin-token", user: { id: "438470" } });
+    assert.equal(sessionApi.loadSession().cloudtoken, "plugin-token");
+    assert.equal(sessionApi.resolvedSessionPath(), "openclaw-state://plugin/yach-im-full/nim-session/default");
   } finally {
-    if (previous === undefined) delete process.env.YACH_IM_FULL_STATE_DIR;
-    else process.env.YACH_IM_FULL_STATE_DIR = previous;
-    fs.rmSync(dir, { recursive: true, force: true });
+    for (const [key, value] of Object.entries(oldValues)) {
+      const envKey = key === "sessionPath" ? "YACH_IM_FULL_SESSION_PATH" : key === "stateDir" ? "YACH_IM_FULL_STATE_DIR" : "YACH_IM_FULL_OPENCLAW_SESSION_PATH";
+      if (value === undefined) delete process.env[envKey];
+      else process.env[envKey] = value;
+    }
+    sessionApi.clearSessionStore();
   }
 });
 
@@ -74,9 +88,8 @@ test("二维码状态 code=200 但没有凭证时仍保持 pending", () => {
 });
 
 test("登录成功后保存 API token、NIM cloudtoken 和 user.id", async () => {
+  sessionApi.configureSessionStore(memoryStore());
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "yach-im-full-login-"));
-  const previous = process.env.YACH_IM_FULL_SESSION_PATH;
-  process.env.YACH_IM_FULL_SESSION_PATH = path.join(dir, "session.json");
   try {
     const session = await loginApi.login({
       timeout: 10_000,
@@ -99,11 +112,9 @@ test("登录成功后保存 API token、NIM cloudtoken 和 user.id", async () =>
     });
     assert.equal(session.user.id, "1001");
     assert.equal(session.cloudtoken, "nim-token");
-    assert.equal(fs.statSync(process.env.YACH_IM_FULL_SESSION_PATH).mode & 0o777, 0o600);
     assert.deepEqual(sessionApi.loadSession(), session);
   } finally {
-    if (previous === undefined) delete process.env.YACH_IM_FULL_SESSION_PATH;
-    else process.env.YACH_IM_FULL_SESSION_PATH = previous;
+    sessionApi.clearSessionStore();
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });

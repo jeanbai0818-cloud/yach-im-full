@@ -2,7 +2,7 @@
   "id": "yach-im-full",
   "name": "Yach IM Full",
   "description": "知音楼企业 IM 聊天通道，支持扫码登录和 NIM 长连接",
-  "version": "2026.9.4-12",
+  "version": "2026.9.4-13",
   "channels": [
     "yach-im-full"
   ],
@@ -123,8 +123,6 @@
       "yach_get_oapi_detail",
       "yach_get_okr_detail",
       "yach_get_org_users",
-      "yach_get_payroll",
-      "yach_get_payroll_history",
       "yach_get_platform_config",
       "yach_get_prompt_bar",
       "yach_get_prompt_detail",
@@ -250,7 +248,6 @@
       "yach_recall_message",
       "yach_recall_remind",
       "yach_recommend_freetime",
-      "yach_refresh_payroll_token",
       "yach_refresh_tencent_token",
       "yach_regenerate_intelloft_message",
       "yach_reject_group_apply",
@@ -680,12 +677,6 @@
     "yach_get_org_users": {
       "optional": true
     },
-    "yach_get_payroll": {
-      "optional": true
-    },
-    "yach_get_payroll_history": {
-      "optional": true
-    },
     "yach_get_platform_config": {
       "optional": true
     },
@@ -1088,10 +1079,6 @@
     "yach_recommend_freetime": {
       "optional": true
     },
-    "yach_refresh_payroll_token": {
-      "optional": true,
-      "sideEffecting": true
-    },
     "yach_refresh_tencent_token": {
       "optional": true
     },
@@ -1310,14 +1297,6 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
-      "payrollAdminToken": {
-        "type": "string",
-        "description": "可选：工资条 admin_token；建议使用 OpenClaw SecretRef"
-      },
-      "sessionPath": {
-        "type": "string",
-        "description": "可选：yach-im-full session.json 的绝对路径"
-      },
       "nimEnabled": {
         "type": "boolean",
         "default": true
@@ -1386,18 +1365,6 @@
           }
         }
       }
-    }
-  },
-  "configContracts": {
-    "secretInputs": {
-      "bundledDefaultEnabled": false,
-      "paths": [
-        {
-          "path": "payrollAdminToken",
-          "expected": "string",
-          "ownerKind": "capability"
-        }
-      ]
     }
   },
   "channelConfigs": {

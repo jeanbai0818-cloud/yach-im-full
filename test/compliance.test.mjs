@@ -7,6 +7,22 @@ const { fullTools, optionalToolNames, sideEffectingToolNames } = await import(".
 const { registerFullRuntime } = await import("../dist/full-runtime.js");
 const { resolveYachAccount, inspectYachAccount } = await import("../dist/config.js");
 
+function pluginStateRuntime() {
+  const stores = new Map();
+  return {
+    state: {
+      openSyncKeyedStore({ namespace }) {
+        if (!stores.has(namespace)) stores.set(namespace, new Map());
+        const values = stores.get(namespace);
+        return {
+          register(key, value) { values.set(key, structuredClone(value)); },
+          lookup(key) { return values.has(key) ? structuredClone(values.get(key)) : undefined; },
+        };
+      },
+    },
+  };
+}
+
 test("manifest declares every optional runtime tool and its side-effect status", () => {
   const contractNames = new Set(manifest.contracts.tools);
   const metadata = manifest.toolMetadata ?? {};
@@ -29,7 +45,7 @@ test("tool-discovery registers tools only and never starts NIM or Gateway routes
     registerHttpRoute() { calls.routes += 1; },
     on() { calls.hooks += 1; },
   });
-  assert.equal(calls.tools.length, 287);
+  assert.equal(calls.tools.length, 284);
   assert.equal(calls.services, 0);
   assert.equal(calls.commands, 0);
   assert.equal(calls.routes, 0);
@@ -42,7 +58,7 @@ test("full runtime asks for approval before Yach external side effects", async (
   const calls = { tools: [], services: [], commands: [], routes: [] };
   registerFullRuntime({
     registrationMode: "full",
-    runtime: {},
+    runtime: pluginStateRuntime(),
     registerTool(tool, options) { calls.tools.push({ name: tool.name, options }); },
     registerService(service) { calls.services.push(service.id); },
     registerCommand(command) { calls.commands.push(command.name); },
@@ -50,7 +66,7 @@ test("full runtime asks for approval before Yach external side effects", async (
     on(event, handler) { hooks.push({ event, handler }); },
   });
   assert.deepEqual(calls.services, ["yach-im-full-nim"]);
-  assert.equal(calls.tools.length, 287);
+  assert.equal(calls.tools.length, 284);
   const beforeToolCall = hooks.find((entry) => entry.event === "before_tool_call")?.handler;
   assert.equal(typeof beforeToolCall, "function");
   assert.ok((await beforeToolCall({ toolName: "yach_send_message", params: {} }))?.requireApproval);

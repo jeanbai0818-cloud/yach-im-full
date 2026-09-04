@@ -1,16 +1,16 @@
 import { fullTools, sideEffectingToolNames } from "../dist/full/full-tools.js";
 import { createRequire } from "node:module";
+import { configureSessionFixture } from "./configure-session-fixture.mjs";
 
 const require = createRequire(import.meta.url);
 const { NimListener } = require("../dist/full/nim/nim-listener.cjs");
 const nimBridge = require("../dist/full/nim-bridge.cjs");
-const { loadSession } = require("../dist/full/auth/session.cjs");
+const { configureSessionStore, loadSession } = require("../dist/full/auth/session.cjs");
 
 const SELF = "438470";
 const INVALID = "__yach_im_full_read_smoke_invalid_20260904__";
 const SKIP = new Map([
   ["yach_prepare_weekly_send", "生成一次性提交 token，保留给人工审阅流程"],
-  ["yach_refresh_payroll_token", "检查受控工资条凭据，保留给人工审阅流程"],
   ["yach_refresh_tencent_token", "会刷新本地腾讯会议 token 缓存"],
   ["yach_attendance_auth_check", "会换取并缓存考勤访问凭据，保留给人工审阅流程"],
 ]);
@@ -87,7 +87,7 @@ function waitForConnect(listener, timeoutMs = 25_000) {
   });
 }
 
-const session = loadSession();
+const session = configureSessionFixture({ configureSessionStore, loadSession });
 if (String(session?.user?.id) !== SELF || !session?.cloudtoken) {
   throw new Error("full read smoke requires yach-im-full session with user.id/cloudtoken");
 }

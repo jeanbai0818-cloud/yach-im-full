@@ -12,8 +12,8 @@ const CAPABILITY_PATH = path.join(ROOT, "docs", "CAPABILITY-MAP.md");
 const CHECK_ONLY = process.argv.includes("--check");
 
 const names = [...new Set(fullToolNames)].sort();
-if (names.length !== 287) {
-  throw new Error(`expected 287 unique migrated tools, found ${names.length}`);
+if (names.length !== 284) {
+  throw new Error(`expected 284 unique migrated tools, found ${names.length}`);
 }
 
 const readJson = (file) => JSON.parse(fs.readFileSync(file, "utf8"));

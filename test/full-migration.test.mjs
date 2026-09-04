@@ -10,14 +10,14 @@ const capabilityMap = await fs.readFile(path.join(root, "docs/CAPABILITY-MAP.md"
 const { fullTools, fullToolNames, optionalToolNames, sideEffectingToolNames } =
   await import("../dist/full/full-tools.js");
 
-test("full migration exports the complete unique 287-tool registry", () => {
-  assert.equal(fullTools.length, 287);
-  assert.equal(new Set(fullToolNames).size, 287);
-  assert.equal(new Set(manifest.contracts.tools).size, 287);
-  assert.equal(Object.keys(manifest.toolMetadata ?? {}).length, 287);
-  assert.equal(optionalToolNames.size, 287);
-  assert.match(capabilityMap, /Active tools: \*\*287\*\*/u);
-  assert.match(capabilityMap, /Optional tools: \*\*287\*\*/u);
+test("full migration exports the complete unique 284-tool registry", () => {
+  assert.equal(fullTools.length, 284);
+  assert.equal(new Set(fullToolNames).size, 284);
+  assert.equal(new Set(manifest.contracts.tools).size, 284);
+  assert.equal(Object.keys(manifest.toolMetadata ?? {}).length, 284);
+  assert.equal(optionalToolNames.size, 284);
+  assert.match(capabilityMap, /Active tools: \*\*284\*\*/u);
+  assert.match(capabilityMap, /Optional tools: \*\*284\*\*/u);
   for (const tool of fullTools) {
     assert.equal(typeof tool.execute, "function", `${tool.name} must be executable`);
     assert.equal(typeof tool.parameters, "object", `${tool.name} must expose parameters`);
@@ -27,7 +27,7 @@ test("full migration exports the complete unique 287-tool registry", () => {
 });
 
 test("every side-effecting migrated tool advertises confirmation", () => {
-  assert.equal(sideEffectingToolNames.size, 134);
+  assert.equal(sideEffectingToolNames.size, 133);
   for (const tool of fullTools.filter((candidate) => sideEffectingToolNames.has(candidate.name))) {
     assert.match(String(tool.description ?? ""), /(确认|授权)/u, `${tool.name} must advertise confirmation`);
     assert.equal(manifest.toolMetadata[tool.name].sideEffecting, true);

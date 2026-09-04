@@ -1,5 +1,7 @@
 import { registerFullCommands } from "./full/full-commands.js";
 import { registerFullTools, sideEffectingToolNames } from "./full/full-tools.js";
+import sessionStoreApi from "./full/auth/session.cjs";
+import okrStoreApi from "./full/yach-im-full/api/ch7-workbench/okr/store.js";
 
 // Keep discovery/setup imports inert. The NIM SDK, browser shims, and auth
 // implementation are loaded only when the full runtime actually starts or a
@@ -90,6 +92,20 @@ function registerFullToolApprovals(api) {
     });
 }
 
+function configurePluginState(api) {
+    const state = api.runtime?.state;
+    if (!state || typeof state.openSyncKeyedStore !== "function") {
+        throw new Error("yach-im-full 需要 OpenClaw runtime.state.openSyncKeyedStore；不会回退到文件、浏览器或共享 session。");
+    }
+    const openStore = (namespace, maxEntries) => state.openSyncKeyedStore({
+        namespace,
+        maxEntries,
+        overflowPolicy: "reject-new",
+    });
+    sessionStoreApi.configureSessionStore(openStore("nim-session", 1));
+    okrStoreApi.configureOkrSessionStore(openStore("okr-session", 1));
+}
+
 export function registerFullRuntime(api) {
     // Tool discovery must expose capabilities only. In particular it must not
     // start NIM, register background services, or publish Gateway routes.
@@ -99,6 +115,7 @@ export function registerFullRuntime(api) {
     }
     if (api.registrationMode && api.registrationMode !== "full")
         return;
+    configurePluginState(api);
     runtimeApi = api.runtime;
     api.registerService(nimService);
     registerFullCommands(api);

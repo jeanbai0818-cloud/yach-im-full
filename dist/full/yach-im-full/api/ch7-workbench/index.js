@@ -10,7 +10,7 @@
  *   纯 JS 重写，不依赖 Python 子进程。
  *   实现在 ./attendance/{client,service}.js
  *
- * ⚠️ 请假 / 工资条 / 报销等仍需运行时抓包，保持占位。
+ * ⚠️ 请假 / 报销等仍需运行时抓包，保持占位。
  */
 
 const NOT_IMPLEMENTED =
@@ -27,7 +27,6 @@ const okr = require('./okr/service');
 // ✅ 周报（真调验证 2026-07-13）：无需单独换票，就是标准 capi 签名接口 mgo/log/*。
 //   实现在 ./weekly/{client,service}.js（对齐旧包 yach-omni-2.1.5 weekly 模块，只读）。
 const weekly  = require('./weekly/service');
-const payroll = require('./payroll/index');
 const { get: _get } = require('../../utils/request');
 // ⭐ 考勤打卡（2026-07-24 真调打通）：
 //   参考 /vol2/1000/docker/yach-attendance，纯 JS 重写，不依赖 Python。
@@ -41,7 +40,6 @@ module.exports = {
   // 打卡认证状态检查
   attendanceAuthCheck: (opts) => attendance.getAttendanceAuthContext(opts),
   applyLeave:    _notImpl('applyLeave'),
-  getPayslip:    _notImpl('getPayslip'),
   applyReimburse:_notImpl('applyReimburse'),
   // OKR 只读能力
   listOkrTemplates: okr.listOkrTemplates,
@@ -81,11 +79,6 @@ module.exports = {
   listUnreadWeekly:      weekly.listUnreadWeekly,
   // ⭐ 考勤状态（2026-07-14 真调验证 com694/attendance/info）
   getAttendanceInfo,
-  // ⭐ 工资条（payroll-api.zhiyinlou.com，2026-07-14 真调验证，JWT 认证）
-  refreshPayrollToken: payroll.refreshPayrollToken,  // 提取/刷新 admin_token
-  getPayroll:          payroll.getPayroll,           // 当月/翻页工资条详情
-  getPayrollList:      payroll.getPayrollList,       // 历史工资条列表
-  getPayrollHistory:   payroll.getPayrollHistory,    // 批量获取多月历史
   _status: { implemented: false, reason: NOT_IMPLEMENTED, okr: true, weekly: true },
 };
 
