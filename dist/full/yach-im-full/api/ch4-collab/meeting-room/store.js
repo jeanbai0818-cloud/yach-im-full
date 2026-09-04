@@ -1,23 +1,19 @@
 /**
- * 会议室 cookie 会话缓存
- * 存于 session.json 同目录下的 meeting-room-session.json（chmod 600, gitignored）。
- * 路径解析复用主 session 的候选优先级（env YACH_STATE_DIR / 本机开发路径）。
+ * 会议室 Cookie 会话仅保存在当前 Gateway 进程内。
+ * 不读取浏览器 Cookie，不创建本地会话文件；Gateway 重启后按需重新完成受控 SSO。
  */
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-const { candidatePaths } = require('../../../auth/session');
+let sessionCache = null;
 
-/** 会议室 session 文件路径（与主 session 同目录）*/
-function meetingRoomSessionPath() {
-  const primary = candidatePaths()[0];
-  return path.join(path.dirname(primary), 'meeting-room-session.json');
-}
-
-/** 返回所有候选路径（读取时依次尝试）*/
-function meetingRoomSessionCandidates() {
-  return candidatePaths().map((p) => path.join(path.dirname(p), 'meeting-room-session.json'));
+function cloneSession(session) {
+  if (!session || typeof session !== 'object') return null;
+  return {
+    ...session,
+    cookies: Array.isArray(session.cookies)
+      ? session.cookies.map((cookie) => ({ ...cookie }))
+      : [],
+  };
 }
 
 function isValidSession(v) {
@@ -32,50 +28,22 @@ function isValidSession(v) {
 }
 
 function readStoredMeetingRoomSession() {
-  for (const p of meetingRoomSessionCandidates()) {
-    try {
-      if (p && fs.existsSync(p)) {
-        const parsed = JSON.parse(fs.readFileSync(p, 'utf8'));
-        if (isValidSession(parsed)) return parsed;
-      }
-    } catch {
-      /* try next */
-    }
-  }
-  return null;
+  return isValidSession(sessionCache) ? cloneSession(sessionCache) : null;
 }
 
 function writeStoredMeetingRoomSession(session) {
-  const p = meetingRoomSessionPath();
-  fs.mkdirSync(path.dirname(p), { recursive: true });
-  const tmp = `${p}.${process.pid}.${Date.now()}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(session, null, 2)}\n`, { mode: 0o600 });
-  fs.renameSync(tmp, p);
-  try {
-    fs.chmodSync(p, 0o600);
-  } catch {
-    /* best effort */
-  }
-  return p;
+  if (!isValidSession(session)) throw new Error('会议室会话格式无效。');
+  sessionCache = cloneSession(session);
+  return 'memory://yach-im-full/meeting-room-session';
 }
 
 function clearStoredMeetingRoomSession() {
-  let cleared = false;
-  for (const p of meetingRoomSessionCandidates()) {
-    try {
-      if (p && fs.existsSync(p)) {
-        fs.unlinkSync(p);
-        cleared = true;
-      }
-    } catch {
-      /* ignore */
-    }
-  }
+  const cleared = Boolean(sessionCache);
+  sessionCache = null;
   return cleared;
 }
 
 module.exports = {
-  meetingRoomSessionPath,
   readStoredMeetingRoomSession,
   writeStoredMeetingRoomSession,
   clearStoredMeetingRoomSession,

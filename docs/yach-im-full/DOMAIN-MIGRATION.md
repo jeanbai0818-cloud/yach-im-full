@@ -7,7 +7,7 @@
 - 36 个业务域、287 个唯一工具已全部迁移并注册到 `yach-im-full`。
 - 工具名和来源接口保持一致，便于已有 Agent 提示词继续使用；工具契约由 `npm run tools:sync` 自动生成。
 - API/tool 运行时通过同一个 `NimListener` 复用 NIM SDK 实例，不会因为工具调用再次创建同账号的第二条 NIM 长连接。
-- `/yach_login` 保存 `user.id + cloudtoken`；优先使用 `yach-im-full` 自己的 session，缺失时只读复用 OpenClaw 共用的 `~/.openclaw/sessions/session.json`，两者都缺失才提示登录。新登录结果始终只写回 full 专属路径，不读取任何其他插件的 session。
+- `/yach_login` 保存 `user.id + cloudtoken`；优先使用 `yach-im-full` 自己的 session，缺失时只从 OpenClaw 共用 session 只读复用这三个 NIM 字段（不读取 HTTP/CAPI 凭据），两者都缺失才提示登录。新登录结果始终只写回 full 专属路径，不读取任何其他插件的 session。
 - 所有迁移工具默认是 optional；134 个外部副作用或敏感凭据操作工具同时标记为 `sideEffecting`，在执行前由插件权限 hook 要求逐次确认。
 
 ## 9 大类与 36 个业务域
@@ -54,5 +54,5 @@
 
 - 发现、setup 和 manifest inspect 阶段不创建网络连接；NIM 只在 full runtime 的插件 service 启动时懒加载。
 - 未登录时 NIM service 保持空闲，不让 Gateway 因缺少 session 启动失败。
-- 写操作仍受来源 API 的参数校验；考勤写卡必须使用调用方显式提供的真实坐标和设备字段，不生成本机身份或位置；工资条只接受受控环境变量中的显式 token。自动响应默认关闭，开启后也按私聊/群聊白名单策略处理。
+- 写操作仍受来源 API 的参数校验；考勤写卡必须使用调用方显式提供的真实坐标和设备字段，不生成本机身份或位置，考勤 access_token 只在进程内短期缓存；工资条只接受受控环境变量中的显式 token。自动响应默认关闭，开启后也按私聊/群聊白名单策略处理。
 - 来源项目的自升级器、私有 session/runtime 镜像和未经确认的自动外发逻辑不随本轮迁移；考勤、邮件、文件、知识库等高影响写操作只在逐次确认后执行。

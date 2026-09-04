@@ -32,11 +32,21 @@ test("考勤只接受调用方显式坐标和设备标识", async () => {
   assert.doesNotMatch(serviceSource, /randomGeoAround|fakeOfficeGeo|machine-id|os\.hostname|FAKE_|office-seed/u);
   assert.deepEqual(yachPunchOnDuty.parameters.required, ["latitude", "longitude", "deviceId", "deviceName"]);
   assert.deepEqual(yachAttendanceAuthCheck.parameters.required, ["latitude", "longitude", "deviceId", "deviceName"]);
+  assert.doesNotMatch(serviceSource, /attendance-auth\.json|writeFileSync|readFileSync|mkdirSync/u);
   assert.throws(
     () => attendanceClient.buildYachHeaders({ token: "t", workcode: "w" }, "test"),
     /deviceId 和 deviceName/u,
   );
   await assert.rejects(() => attendanceService.getAttendanceAuthContext(), /longitude/u);
+});
+
+test("辅助系统会话只在进程内缓存，不写本机 Cookie/token 文件", async () => {
+  const meetingStore = await fs.readFile(path.join(root, "dist/full/yach-im-full/api/ch4-collab/meeting-room/store.js"), "utf8");
+  const mailStore = await fs.readFile(path.join(root, "dist/full/yach-im-full/api/ch5-docs/mail/store.js"), "utf8");
+  const intelloft = await fs.readFile(path.join(root, "dist/full/yach-im-full/api/ch36-intelloft/index.js"), "utf8");
+  assert.doesNotMatch(meetingStore, /writeFileSync|readFileSync|meeting-room-session\.json/u);
+  assert.doesNotMatch(mailStore, /writeFileSync|readFileSync|mail-session\.json/u);
+  assert.doesNotMatch(intelloft, /h5-token\.json|readFileSync\(tokenPath|writeFileSync\(tmp/u);
 });
 
 test("工资条检查不持久化 token", async () => {

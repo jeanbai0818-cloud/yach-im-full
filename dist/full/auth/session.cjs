@@ -33,10 +33,24 @@ function candidatePaths() {
 }
 
 function loadSession() {
-  for (const file of candidatePaths()) {
+  const paths = candidatePaths();
+  for (const [index, file] of paths.entries()) {
     if (!fs.existsSync(file)) continue;
     try {
-      return JSON.parse(fs.readFileSync(file, 'utf8'));
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      // The shared OpenClaw session is a compatibility source for NIM only.
+      // Never hand its HTTP/CAPI credentials or unrelated fields to this plugin.
+      if (index > 0) {
+        return {
+          cloudtoken: typeof parsed?.cloudtoken === 'string' ? parsed.cloudtoken : '',
+          user: {
+            id: parsed?.user?.id == null ? '' : String(parsed.user.id),
+            name: typeof parsed?.user?.name === 'string' ? parsed.user.name : '',
+            name_nick: typeof parsed?.user?.name_nick === 'string' ? parsed.user.name_nick : '',
+          },
+        };
+      }
+      return parsed;
     } catch (error) {
       throw new Error(`yach-im-full session 文件损坏或不可读：${file}（${error.message}）`);
     }

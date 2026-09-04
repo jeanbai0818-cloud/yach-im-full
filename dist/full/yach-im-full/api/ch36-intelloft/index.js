@@ -1,7 +1,7 @@
 /**
  * 知小楼（Intelloft）H5 会话接口。
  *
- * 来源：yach-aio 2.1.5。这里按当前项目的 session/state 约定重新实现，
+ * 来源：yach-aio 2.1.5。这里按当前项目的运行时约定重新实现，
  * 不依赖来源项目的绝对路径、私有状态或自升级逻辑。
  */
 const fs = require('fs');
@@ -28,31 +28,22 @@ const TRUSTED_IMAGE_HOSTS = new Set([
   'yach-nos.netease.im',
 ]);
 
-function stateRoot() {
-  return process.env.YACH_STATE_DIR
-    ? path.resolve(process.env.YACH_STATE_DIR)
-    : path.resolve(__dirname, '../../../data');
-}
+let h5TokenCache = null;
 
 function tokenPath() {
-  return path.join(stateRoot(), 'intelloft', 'h5-token.json');
+  return 'memory://yach-im-full/intelloft-h5-token';
 }
 
 function readToken() {
-  try {
-    const value = JSON.parse(fs.readFileSync(tokenPath(), 'utf8'));
-    if (value.accessToken && Number(value.expiresAt) > Date.now() + 30_000) return value;
-  } catch {}
+  if (h5TokenCache?.accessToken && Number(h5TokenCache.expiresAt) > Date.now() + 30_000) {
+    return { ...h5TokenCache };
+  }
   return null;
 }
 
 function writeToken(value) {
-  const target = tokenPath();
-  fs.mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
-  const tmp = `${target}.${process.pid}.${Date.now()}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
-  fs.renameSync(tmp, target);
-  fs.chmodSync(target, 0o600);
+  h5TokenCache = { ...value };
+  return tokenPath();
 }
 
 async function refreshToken() {

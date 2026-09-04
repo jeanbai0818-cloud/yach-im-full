@@ -5,78 +5,23 @@
  * 本模块不读取系统硬件标识，不从主机名推导设备信息，也不替调用方选择坐标。
  */
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
 const { URLSearchParams } = require('url');
 
 const C = require('./client.js');
 
-// ── 状态持久化 ────────────────────────────────────────────────────────────────
+// ── 短期认证缓存 ─────────────────────────────────────────────────────────────
 
-function stateDir() {
-  const candidates = [
-    process.env.YACH_STATE_DIR,
-    path.join(os.homedir(), '.openclaw/workspace-yach/sessions'),
-    path.resolve(__dirname, '../../../../sessions'),
-  ].filter(Boolean);
-  for (const d of candidates) {
-    try {
-      const resolved = path.resolve(d);
-      fs.mkdirSync(resolved, { recursive: true, mode: 0o700 });
-      return resolved;
-    } catch { /* try the next state directory */ }
-  }
-  return path.resolve(__dirname, '../../../../sessions');
-}
-
-function attendanceAuthPath() {
-  return path.join(stateDir(), 'attendance-auth.json');
-}
-
-function atomicWriteJson(filePath, data) {
-  const tmp = filePath + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), { encoding: 'utf-8', mode: 0o600 });
-  fs.renameSync(tmp, filePath);
-  fs.chmodSync(filePath, 0o600);
-}
+// 考勤 access_token 只在当前 Gateway 进程内短期复用。
+// 不从系统/浏览器读取，也不写入本地文件；重启后由显式人工调用重新换票。
+let attendanceAuthCache = null;
 
 function loadAttendanceAuth() {
-  const filePath = attendanceAuthPath();
-  if (!fs.existsSync(filePath)) return null;
-  try {
-    const payload = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    const accessToken = String(payload.access_token || '').trim();
-    const workcode = String(payload.workcode || '').trim();
-    if (!accessToken || !workcode) return null;
-    return {
-      access_token: accessToken,
-      workcode,
-      uuid: String(payload.uuid || payload.device_id || '').trim(),
-      device_id: String(payload.device_id || payload.uuid || '').trim(),
-      device_name: String(payload.device_name || '').trim(),
-      device_brand: String(payload.device_brand || '').trim(),
-      device_model: String(payload.device_model || '').trim(),
-      device_version: String(payload.device_version || '').trim(),
-      network_type: String(payload.network_type || '').trim(),
-      system_version: String(payload.system_version || '').trim(),
-      platform: String(payload.platform || '').trim(),
-      client_version: String(payload.client_version || C.DEFAULT_CLIENT_VERSION),
-      client_release: String(payload.client_release || '').trim(),
-      lon: String(payload.lon || '').trim(),
-      lat: String(payload.lat || '').trim(),
-      geo_source: String(payload.geo_source || 'caller-provided'),
-      device_source: String(payload.device_source || 'caller-provided'),
-      auth_source: String(payload.auth_source || 'cached-attendance-auth'),
-      auth_page_title: String(payload.auth_page_title || ''),
-      auth_page_href: String(payload.auth_page_href || ''),
-      session_source: String(payload.session_source || 'persisted-attendance-auth'),
-    };
-  } catch { return null; }
+  if (!attendanceAuthCache) return null;
+  return { ...attendanceAuthCache };
 }
 
 function saveAttendanceAuth(ctx) {
-  atomicWriteJson(attendanceAuthPath(), {
+  attendanceAuthCache = {
     access_token: ctx.access_token,
     workcode: ctx.workcode,
     uuid: ctx.uuid,
@@ -99,7 +44,7 @@ function saveAttendanceAuth(ctx) {
     auth_page_href: ctx.auth_page_href,
     session_source: ctx.session_source,
     saved_at: new Date().toISOString(),
-  });
+  };
 }
 
 // ── 两步换票：capi session → auth_code → clockin access_token ───────────────

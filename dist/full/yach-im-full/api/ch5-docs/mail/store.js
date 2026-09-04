@@ -1,17 +1,19 @@
 /**
- * 企业邮箱会话缓存（cookies + sid），存主 session 同目录 mail-session.json。
+ * 企业邮箱会话仅保存在当前 Gateway 进程内。
+ * 不读取浏览器 Cookie，不创建本地会话文件；Gateway 重启后按需重新完成受控 SSO。
  */
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-const { candidatePaths } = require('../../../auth/session');
+let sessionCache = null;
 
-function mailSessionPath() {
-  return path.join(path.dirname(candidatePaths()[0]), 'mail-session.json');
-}
-function mailSessionCandidates() {
-  return candidatePaths().map((p) => path.join(path.dirname(p), 'mail-session.json'));
+function cloneSession(session) {
+  if (!session || typeof session !== 'object') return null;
+  return {
+    ...session,
+    cookies: Array.isArray(session.cookies)
+      ? session.cookies.map((cookie) => ({ ...cookie }))
+      : [],
+  };
 }
 function isValid(v) {
   return (
@@ -25,31 +27,13 @@ function isValid(v) {
 }
 
 function readStoredMailSession() {
-  for (const p of mailSessionCandidates()) {
-    try {
-      if (p && fs.existsSync(p)) {
-        const parsed = JSON.parse(fs.readFileSync(p, 'utf8'));
-        if (isValid(parsed)) return parsed;
-      }
-    } catch {
-      /* next */
-    }
-  }
-  return null;
+  return isValid(sessionCache) ? cloneSession(sessionCache) : null;
 }
 
 function writeStoredMailSession(session) {
-  const p = mailSessionPath();
-  fs.mkdirSync(path.dirname(p), { recursive: true });
-  const tmp = `${p}.${process.pid}.${Date.now()}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(session, null, 2)}\n`, { mode: 0o600 });
-  fs.renameSync(tmp, p);
-  try {
-    fs.chmodSync(p, 0o600);
-  } catch {
-    /* best effort */
-  }
-  return p;
+  if (!isValid(session)) throw new Error('企业邮箱会话格式无效。');
+  sessionCache = cloneSession(session);
+  return 'memory://yach-im-full/mail-session';
 }
 
-module.exports = { mailSessionPath, readStoredMailSession, writeStoredMailSession };
+module.exports = { readStoredMailSession, writeStoredMailSession };

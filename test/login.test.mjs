@@ -47,9 +47,18 @@ test("session reader 可复用 OpenClaw 共用 session，但新登录仍写入 f
   process.env.YACH_IM_FULL_STATE_DIR = path.join(dir, "yach-im-full");
   const shared = path.join(dir, "sessions", "session.json");
   fs.mkdirSync(path.dirname(shared), { recursive: true });
-  fs.writeFileSync(shared, JSON.stringify({ cloudtoken: "shared-nim-token", user: { id: "438470" } }));
+  fs.writeFileSync(shared, JSON.stringify({
+    token: "must-not-cross-boundary",
+    accesstoken: "must-not-cross-boundary",
+    cloudtoken: "shared-nim-token",
+    user: { id: "438470", name: "NIM user" },
+    unrelated: "must-not-cross-boundary",
+  }));
   try {
-    assert.equal(sessionApi.loadSession().user.id, "438470");
+    assert.deepEqual(sessionApi.loadSession(), {
+      cloudtoken: "shared-nim-token",
+      user: { id: "438470", name: "NIM user", name_nick: "" },
+    });
     assert.equal(sessionApi.candidatePaths()[0], path.join(dir, "yach-im-full", "sessions", "session.json"));
   } finally {
     if (previous === undefined) delete process.env.YACH_IM_FULL_STATE_DIR;
