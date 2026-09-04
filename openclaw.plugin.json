@@ -2,7 +2,7 @@
   "id": "yach-im-full",
   "name": "Yach IM Full",
   "description": "知音楼企业 IM 聊天通道，支持扫码登录和 NIM 长连接",
-  "version": "2026.9.4-7",
+  "version": "2026.9.4-8",
   "channels": [
     "yach-im-full"
   ],
@@ -1089,7 +1089,8 @@
       "optional": true
     },
     "yach_refresh_payroll_token": {
-      "optional": true
+      "optional": true,
+      "sideEffecting": true
     },
     "yach_refresh_tencent_token": {
       "optional": true

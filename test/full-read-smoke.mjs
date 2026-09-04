@@ -10,8 +10,9 @@ const SELF = "438470";
 const INVALID = "__yach_im_full_read_smoke_invalid_20260904__";
 const SKIP = new Map([
   ["yach_prepare_weekly_send", "生成一次性提交 token，保留给人工审阅流程"],
-  ["yach_refresh_payroll_token", "会更新本地工资条 token 缓存"],
+  ["yach_refresh_payroll_token", "检查受控工资条凭据，保留给人工审阅流程"],
   ["yach_refresh_tencent_token", "会刷新本地腾讯会议 token 缓存"],
+  ["yach_attendance_auth_check", "会换取并缓存考勤访问凭据，保留给人工审阅流程"],
 ]);
 
 function scalarFor(name, schema = {}) {

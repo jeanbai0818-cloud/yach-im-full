@@ -4,7 +4,7 @@
 
 - Active tools: **287**
 - Optional tools: **287**
-- Side-effecting tools requiring per-call approval: **133**
+- Side-effecting tools requiring per-call approval: **134**
 
 - `yach_accept_group_apply` — sideEffecting
 - `yach_add_collect` — sideEffecting
@@ -236,7 +236,7 @@
 - `yach_recall_message` — sideEffecting
 - `yach_recall_remind` — sideEffecting
 - `yach_recommend_freetime`
-- `yach_refresh_payroll_token`
+- `yach_refresh_payroll_token` — sideEffecting
 - `yach_refresh_tencent_token`
 - `yach_regenerate_intelloft_message` — sideEffecting
 - `yach_reject_group_apply` — sideEffecting

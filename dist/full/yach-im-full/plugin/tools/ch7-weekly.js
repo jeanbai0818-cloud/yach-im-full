@@ -574,17 +574,17 @@ export const yachGetAttendanceInfo = {
         return toolResult(`${st}\n服务器时间: ${t}\n轮询间隔: ${a.timer_interval ?? "-"}s`);
     },
 };
-/** ⭐ 提取/刷新工资条 admin_token（从 App Cookie 文件自动提取）*/
+/** ⭐ 检查工资条 admin_token（仅使用显式受控配置）*/
 export const yachRefreshPayrollToken = {
     name: "yach_refresh_payroll_token",
     label: "提取工资条 Token",
-    description: "从知音楼 App 沙盒 Cookie 文件自动提取 payroll admin_token（需 App 已打开工资条页面）。提取后缓存到 session，1小时有效。",
+    description: "检查显式配置的工资条 admin_token（SecretRef 或环境变量 YACH_IM_FULL_PAYROLL_ADMIN_TOKEN）。不读取本机应用/浏览器凭据，不回显或写入本地文件；这是敏感凭据操作，执行前需用户确认。",
     parameters: Type.Object({}),
     async execute(_id, _params) {
         const require = createRequire(import.meta.url);
         const ch7 = require("../../api/ch7-workbench/index.js");
         const r = await ch7.refreshPayrollToken();
-        return toolResult(`✅ admin_token 提取成功并已缓存\n` +
+        return toolResult(`✅ 工资条 admin_token 已配置（不回显、不写入本地文件）\n` +
             `过期时间: ${r.exp}\n内部用户 ID: ${r.sub}\n签发者: ${r.iss}`);
     },
 };
@@ -592,7 +592,7 @@ export const yachRefreshPayrollToken = {
 export const yachGetPayroll = {
     name: "yach_get_payroll",
     label: "查工资条",
-    description: "获取工资条详情。page: C=当月(默认)/P=上月/N=下月；翻页时传 calId（上次响应返回）。需先调 yach_refresh_payroll_token 或在 App 打开过工资条。",
+    description: "获取工资条详情。page: C=当月(默认)/P=上月/N=下月；翻页时传 calId（上次响应返回）。需先通过受控 SecretRef 或环境变量配置有效的工资条 admin_token。",
     parameters: Type.Object({
         page: Type.Optional(Type.Union([
             Type.Literal("C"), Type.Literal("P"), Type.Literal("N"),

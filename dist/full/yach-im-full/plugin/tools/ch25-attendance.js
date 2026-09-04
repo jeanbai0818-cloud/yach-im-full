@@ -15,6 +15,22 @@ const require = createRequire(import.meta.url);
 function toolResult(text) {
     return { content: [{ type: "text", text }], details: null };
 }
+const attendanceParameters = () => Type.Object({
+    latitude: Type.Number({ description: "调用方提供的实际纬度（-90 到 90）；不会使用默认坐标" }),
+    longitude: Type.Number({ description: "调用方提供的实际经度（-180 到 180）；不会使用默认坐标" }),
+    deviceId: Type.String({ description: "调用方明确提供的设备标识；插件不会生成或伪造" }),
+    deviceName: Type.String({ description: "调用方明确提供的设备名称；插件不会从系统主机名推导" }),
+    deviceBrand: Type.Optional(Type.String({ description: "服务端要求时填写真实设备品牌" })),
+    deviceModel: Type.Optional(Type.String({ description: "服务端要求时填写真实设备型号" })),
+    deviceVersion: Type.Optional(Type.String({ description: "服务端要求时填写真实客户端版本" })),
+    networkType: Type.Optional(Type.String({ description: "服务端要求时填写真实网络类型" })),
+    systemVersion: Type.Optional(Type.String({ description: "服务端要求时填写真实系统版本" })),
+    platform: Type.Optional(Type.String({ description: "服务端要求时填写真实平台标识" })),
+    clientVersion: Type.Optional(Type.String({ description: "服务端要求时填写真实客户端版本" })),
+    clientRelease: Type.Optional(Type.String({ description: "服务端要求时填写真实客户端发布版本" })),
+    force: Type.Optional(Type.Boolean({ description: "覆盖已有打卡记录" })),
+    address: Type.Optional(Type.String({ description: "真实打卡地址；为空时使用服务端已有排班地址" })),
+});
 function formatPunchResult(r) {
     const lines = [];
     lines.push(`✅ ${r.check_type} 打卡成功`);
@@ -32,15 +48,12 @@ function formatPunchResult(r) {
 export const yachPunchOnDuty = {
     name: "yach_punch_on_duty",
     label: "上班打卡",
-    description: "知音楼上班打卡（OnDuty，高风险写操作）。每次调用前必须获得用户对本次上班打卡的明确确认；force=true 覆盖已有记录时必须单独确认。",
-    parameters: Type.Object({
-        force: Type.Optional(Type.Boolean({ description: "覆盖已有打卡记录" })),
-        address: Type.Optional(Type.String({ description: "自定义打卡地址，默认用公司地址" })),
-    }),
+    description: "知音楼上班打卡（OnDuty，高风险写操作）。每次调用前必须获得用户对本次上班打卡的明确确认，并由调用方提供真实坐标和设备信息；插件不会生成定位或伪造设备。force=true 覆盖已有记录时必须单独确认。",
+    parameters: attendanceParameters(),
     async execute(_id, params) {
         const ch7 = require("../../api/ch7-workbench/index.js");
         try {
-            const r = await ch7.punchOnDuty({ force: params.force || false, address: params.address || '' });
+            const r = await ch7.punchOnDuty(params);
             return toolResult(formatPunchResult(r));
         }
         catch (e) {
@@ -52,15 +65,12 @@ export const yachPunchOnDuty = {
 export const yachPunchOffDuty = {
     name: "yach_punch_off_duty",
     label: "下班打卡",
-    description: "知音楼下班打卡（OffDuty，高风险写操作）。每次调用前必须获得用户对本次下班打卡的明确确认；force=true 覆盖已有记录时必须单独确认。",
-    parameters: Type.Object({
-        force: Type.Optional(Type.Boolean({ description: "覆盖已有打卡记录" })),
-        address: Type.Optional(Type.String({ description: "自定义打卡地址，默认用公司地址" })),
-    }),
+    description: "知音楼下班打卡（OffDuty，高风险写操作）。每次调用前必须获得用户对本次下班打卡的明确确认，并由调用方提供真实坐标和设备信息；插件不会生成定位或伪造设备。force=true 覆盖已有记录时必须单独确认。",
+    parameters: attendanceParameters(),
     async execute(_id, params) {
         const ch7 = require("../../api/ch7-workbench/index.js");
         try {
-            const r = await ch7.punchOffDuty({ force: params.force || false, address: params.address || '' });
+            const r = await ch7.punchOffDuty(params);
             return toolResult(formatPunchResult(r));
         }
         catch (e) {
@@ -72,12 +82,12 @@ export const yachPunchOffDuty = {
 export const yachAttendanceAuthCheck = {
     name: "yach_attendance_auth_check",
     label: "打卡认证检查",
-    description: "检查打卡认证状态：是否能成功换票拿到 clockin access_token，以及缓存是否仍有效。",
-    parameters: Type.Object({}),
-    async execute(_id, _params) {
+    description: "检查打卡认证状态：使用调用方提供的真实坐标和设备信息换票；不会生成、伪造或从系统读取设备/定位数据。",
+    parameters: attendanceParameters(),
+    async execute(_id, params) {
         const ch7 = require("../../api/ch7-workbench/index.js");
         try {
-            const ctx = await ch7.attendanceAuthCheck({});
+            const ctx = await ch7.attendanceAuthCheck(params);
             return toolResult(`✅ 打卡认证有效\n` +
                 `workcode: ${ctx.workcode}\n` +
                 `access_token: 已获取（不回显）\n` +

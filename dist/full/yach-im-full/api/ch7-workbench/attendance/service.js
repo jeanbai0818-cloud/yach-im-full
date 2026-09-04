@@ -1,20 +1,13 @@
 /**
- * 知音楼打卡业务逻辑
+ * 知音楼打卡业务逻辑。
  *
- * 参考实现：/vol2/1000/docker/yach-attendance/python/yachattend/attendance/__init__.py
- * 纯 JS 重写，不依赖 Python 子进程。
- *
- * 核心流程：
- *   1. capi session → /94capi/ucenter/auth/code → 拿 auth_code
- *   2. auth_code → clockin-api /login/code → 拿打卡 access_token (Bearer)
- *   3. /api/group → 查排班 → /api/time/result → 预检
- *   4. /api/location → 随机地理 → RSA 加密 crc → /api/record → 写卡
+ * 认证与写卡均要求调用方显式提供本次操作的真实坐标和设备信息。
+ * 本模块不读取系统硬件标识，不从主机名推导设备信息，也不替调用方选择坐标。
  */
 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const crypto = require('crypto');
 const { URLSearchParams } = require('url');
 
 const C = require('./client.js');
@@ -22,7 +15,6 @@ const C = require('./client.js');
 // ── 状态持久化 ────────────────────────────────────────────────────────────────
 
 function stateDir() {
-  // 尝试多个候选路径
   const candidates = [
     process.env.YACH_STATE_DIR,
     path.join(os.homedir(), '.openclaw/workspace-yach/sessions'),
@@ -31,9 +23,9 @@ function stateDir() {
   for (const d of candidates) {
     try {
       const resolved = path.resolve(d);
-      fs.mkdirSync(resolved, { recursive: true });
+      fs.mkdirSync(resolved, { recursive: true, mode: 0o700 });
       return resolved;
-    } catch { /* 继续找 */ }
+    } catch { /* try the next state directory */ }
   }
   return path.resolve(__dirname, '../../../../sessions');
 }
@@ -45,29 +37,36 @@ function attendanceAuthPath() {
 function atomicWriteJson(filePath, data) {
   const tmp = filePath + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2), { encoding: 'utf-8', mode: 0o600 });
-  fs.copyFileSync(tmp, filePath);
+  fs.renameSync(tmp, filePath);
   fs.chmodSync(filePath, 0o600);
-  try { fs.unlinkSync(tmp); } catch { /* ignore */ }
 }
 
 function loadAttendanceAuth() {
-  const p = attendanceAuthPath();
-  if (!fs.existsSync(p)) return null;
+  const filePath = attendanceAuthPath();
+  if (!fs.existsSync(filePath)) return null;
   try {
-    const payload = JSON.parse(fs.readFileSync(p, 'utf-8'));
-    const token = String(payload.access_token || '').trim();
+    const payload = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    const accessToken = String(payload.access_token || '').trim();
     const workcode = String(payload.workcode || '').trim();
-    if (!token || !workcode) return null;
+    if (!accessToken || !workcode) return null;
     return {
-      access_token: token,
+      access_token: accessToken,
       workcode,
-      uuid: String(payload.uuid || fakeUuid()),
+      uuid: String(payload.uuid || payload.device_id || '').trim(),
+      device_id: String(payload.device_id || payload.uuid || '').trim(),
+      device_name: String(payload.device_name || '').trim(),
+      device_brand: String(payload.device_brand || '').trim(),
+      device_model: String(payload.device_model || '').trim(),
+      device_version: String(payload.device_version || '').trim(),
+      network_type: String(payload.network_type || '').trim(),
+      system_version: String(payload.system_version || '').trim(),
+      platform: String(payload.platform || '').trim(),
       client_version: String(payload.client_version || C.DEFAULT_CLIENT_VERSION),
-      client_release: String(payload.client_release || ''),
-      lon: String(payload.lon || `${C.OFFICE_BASE_LON}`),
-      lat: String(payload.lat || `${C.OFFICE_BASE_LAT}`),
-      geo_source: String(payload.geo_source || 'attendance-auth-cache'),
-      device_source: String(payload.device_source || 'fake-device-profile'),
+      client_release: String(payload.client_release || '').trim(),
+      lon: String(payload.lon || '').trim(),
+      lat: String(payload.lat || '').trim(),
+      geo_source: String(payload.geo_source || 'caller-provided'),
+      device_source: String(payload.device_source || 'caller-provided'),
       auth_source: String(payload.auth_source || 'cached-attendance-auth'),
       auth_page_title: String(payload.auth_page_title || ''),
       auth_page_href: String(payload.auth_page_href || ''),
@@ -81,6 +80,14 @@ function saveAttendanceAuth(ctx) {
     access_token: ctx.access_token,
     workcode: ctx.workcode,
     uuid: ctx.uuid,
+    device_id: ctx.device_id || ctx.uuid,
+    device_name: ctx.device_name,
+    device_brand: ctx.device_brand,
+    device_model: ctx.device_model,
+    device_version: ctx.device_version,
+    network_type: ctx.network_type,
+    system_version: ctx.system_version,
+    platform: ctx.platform,
     client_version: ctx.client_version,
     client_release: ctx.client_release,
     lon: ctx.lon,
@@ -91,30 +98,8 @@ function saveAttendanceAuth(ctx) {
     auth_page_title: ctx.auth_page_title,
     auth_page_href: ctx.auth_page_href,
     session_source: ctx.session_source,
-    saved_at: new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Shanghai' }),
+    saved_at: new Date().toISOString(),
   });
-}
-
-// ── 设备 ID ───────────────────────────────────────────────────────────────────
-
-function machineSerial() {
-  const linuxCandidates = [
-    '/etc/machine-id',
-    '/var/lib/dbus/machine-id',
-    '/sys/class/dmi/id/product_uuid',
-  ];
-  for (const candidate of linuxCandidates) {
-    try {
-      const value = fs.readFileSync(candidate, 'utf-8').trim();
-      if (value) return value;
-    } catch { /* continue */ }
-  }
-  return `${os.hostname()}|${os.homedir()}`;
-}
-
-function fakeUuid() {
-  const seed = `yachblade-attendance:${machineSerial()}`;
-  return crypto.createHash('sha256').update(seed).digest('hex').slice(0, 32);
 }
 
 // ── 两步换票：capi session → auth_code → clockin access_token ───────────────
@@ -126,7 +111,58 @@ function loginWithAuthCode(code) {
   });
 }
 
-function contextFromLogin(login, opts = {}) {
+function normalizeAttendanceInput(opts = {}) {
+  const longitude = Number(opts.longitude ?? opts.lon);
+  const latitude = Number(opts.latitude ?? opts.lat);
+  const deviceId = String(opts.deviceId || '').trim();
+  const deviceName = String(opts.deviceName || '').trim();
+  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    throw new Error('考勤操作必须提供有效的 longitude（-180 到 180），不会使用默认坐标。');
+  }
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+    throw new Error('考勤操作必须提供有效的 latitude（-90 到 90），不会使用默认坐标。');
+  }
+  if (!deviceId || !deviceName) {
+    throw new Error('考勤操作必须由调用方显式提供 deviceId 和 deviceName，不会从系统读取或构造设备标识。');
+  }
+  return {
+    longitude: String(longitude),
+    latitude: String(latitude),
+    deviceId,
+    deviceName,
+    deviceBrand: String(opts.deviceBrand || '').trim(),
+    deviceModel: String(opts.deviceModel || '').trim(),
+    deviceVersion: String(opts.deviceVersion || '').trim(),
+    networkType: String(opts.networkType || '').trim(),
+    systemVersion: String(opts.systemVersion || '').trim(),
+    platform: String(opts.platform || '').trim(),
+    clientVersion: String(opts.clientVersion || C.DEFAULT_CLIENT_VERSION).trim(),
+    clientRelease: String(opts.clientRelease || '').trim(),
+  };
+}
+
+function applyAttendanceInput(ctx, input) {
+  return {
+    ...ctx,
+    uuid: input.deviceId,
+    device_id: input.deviceId,
+    device_name: input.deviceName,
+    device_brand: input.deviceBrand,
+    device_model: input.deviceModel,
+    device_version: input.deviceVersion,
+    network_type: input.networkType,
+    system_version: input.systemVersion,
+    platform: input.platform,
+    client_version: input.clientVersion,
+    client_release: input.clientRelease,
+    lon: input.longitude,
+    lat: input.latitude,
+    geo_source: 'caller-provided',
+    device_source: 'caller-provided',
+  };
+}
+
+function contextFromLogin(login, input, opts = {}) {
   const data = login.data || {};
   const token = String(data.access_token || '').trim();
   const user = data.user || {};
@@ -134,17 +170,24 @@ function contextFromLogin(login, opts = {}) {
   if (!token || !workcode) {
     throw new Error(`/login/code 缺 access_token/workcode：${JSON.stringify(login)}`);
   }
-  const [lon, lat] = C.fakeOfficeGeo(C.OFFICE_GEO_SEED_METERS);
   return {
     access_token: token,
     workcode,
-    uuid: fakeUuid(),
-    client_version: C.DEFAULT_CLIENT_VERSION,
-    client_release: os.release() || '',
-    lon,
-    lat,
-    geo_source: 'office-seed-100m',
-    device_source: 'fake-device-profile',
+    uuid: input.deviceId,
+    device_id: input.deviceId,
+    device_name: input.deviceName,
+    device_brand: input.deviceBrand,
+    device_model: input.deviceModel,
+    device_version: input.deviceVersion,
+    network_type: input.networkType,
+    system_version: input.systemVersion,
+    platform: input.platform,
+    client_version: input.clientVersion,
+    client_release: input.clientRelease,
+    lon: input.longitude,
+    lat: input.latitude,
+    geo_source: 'caller-provided',
+    device_source: 'caller-provided',
     auth_source: opts.authSource || 'qr-session-auth-code',
     auth_page_title: 'yach-attendance',
     auth_page_href: opts.authPageHref || '',
@@ -152,26 +195,24 @@ function contextFromLogin(login, opts = {}) {
   };
 }
 
-async function bootstrapPluginSessionAuthContext() {
-  const session = C.loadPluginSession();
-  if (!session) {
-    throw new Error('当前没有可用的 Yach 会话，请先扫码登录。');
-  }
-  return _bootstrapAsync(session);
+async function bootstrapPluginSessionAuthContext(opts = {}) {
+  const input = normalizeAttendanceInput(opts);
+  const session = C.loadPluginSession(input);
+  if (!session) throw new Error('当前没有可用的 Yach 会话，请先扫码登录。');
+  return _bootstrapAsync(session, input);
 }
 
-async function _bootstrapAsync(session) {
+async function _bootstrapAsync(session, input) {
   const auth = await C.capiPost('/94capi/ucenter/auth/code', session, {});
   const code = String((auth.obj || {}).code || '').trim();
   if (Number(auth.code) !== 200 || !code) {
     throw new Error(`/94capi/ucenter/auth/code 失败：${JSON.stringify(auth)}`);
   }
-  // Step 2: auth_code → clockin access_token
   const login = await loginWithAuthCode(code);
   if (Number(login.code) !== 200) {
     throw new Error(`/login/code 失败：${JSON.stringify(login)}`);
   }
-  const ctx = contextFromLogin(login, {
+  const ctx = contextFromLogin(login, input, {
     sessionSource: 'plugin-session-bootstrap',
     authSource: 'qr-session-auth-code',
     authPageHref: 'plugin-session',
@@ -180,11 +221,8 @@ async function _bootstrapAsync(session) {
   return ctx;
 }
 
-// ── 验证打卡 token 是否仍有效 ────────────────────────────────────────────────
-
 async function validateAttendanceAuth(ctx) {
   try {
-    const headers = C.authHeaders(ctx.access_token, ctx.workcode, ctx.client_version);
     const group = await C.clockinGet(C.groupPath(), ctx.access_token, ctx.workcode, ctx.client_version);
     return Number(group.code) === 200;
   } catch {
@@ -192,82 +230,49 @@ async function validateAttendanceAuth(ctx) {
   }
 }
 
-async function getAttendanceAuthContext() {
+async function getAttendanceAuthContext(opts = {}) {
+  const input = normalizeAttendanceInput(opts);
   const cached = loadAttendanceAuth();
-  if (cached) {
-    const valid = await validateAttendanceAuth(cached);
-    if (valid) return cached;
+  if (cached && await validateAttendanceAuth(cached)) {
+    return applyAttendanceInput(cached, input);
   }
-  const fresh = await _bootstrapAsync(C.loadPluginSession());
+  const session = C.loadPluginSession(input);
+  if (!session) throw new Error('当前没有可用的 Yach 会话，请先扫码登录。');
+  const fresh = await _bootstrapAsync(session, input);
   saveAttendanceAuth(fresh);
   return fresh;
 }
 
-// ── 地理随机化解析 ───────────────────────────────────────────────────────────
+// ── 调用方坐标校验 ────────────────────────────────────────────────────────────
 
-async function resolveRandomizedGeo(ctx) {
-  const headers = C.authHeaders(ctx.access_token, ctx.workcode, ctx.client_version);
-  const seedLon = String(ctx.lon);
-  const seedLat = String(ctx.lat);
-
-  const seedLocation = await C.clockinGet(C.locationPath(seedLon, seedLat), ctx.access_token, ctx.workcode, ctx.client_version);
-
-  let center = C.extractLocationCenter(seedLocation);
-  let centerSource;
-  if (center) {
-    centerSource = 'location-response-coord';
-  } else {
-    center = [parseFloat(seedLon), parseFloat(seedLat)];
-    centerSource = 'seed-fallback';
+async function resolveProvidedGeo(ctx) {
+  const lon = String(ctx.lon);
+  const lat = String(ctx.lat);
+  const location = await C.clockinGet(C.locationPath(lon, lat), ctx.access_token, ctx.workcode, ctx.client_version);
+  if (C.locationAllowsClockin(location)) {
+    return { lon, lat, geoSource: 'caller-provided', location, geoAttempts: [{ attempt: 1, lon, lat, is_allow_clockin: true }] };
   }
-  const [centerLon, centerLat] = center;
-
-  const attempts = [];
-  for (let i = 1; i <= C.RANDOMIZED_GEO_MAX_ATTEMPTS; i++) {
-    const [lon, lat] = C.randomGeoAround(centerLon, centerLat, C.RANDOMIZED_GEO_RADIUS_METERS);
-    const location = await C.clockinGet(C.locationPath(lon, lat), ctx.access_token, ctx.workcode, ctx.client_version);
-    attempts.push({
-      attempt: i, lon, lat,
-      is_allow_clockin: !!((location || {}).data || {}).is_allow_clockin,
-      dist: String(((location || {}).data || {}).dist || ''),
-    });
-    if (C.locationAllowsClockin(location)) {
-      return { lon, lat, geoSource: `location-center-random-${C.RANDOMIZED_GEO_RADIUS_METERS}m`, location, seedLocation, centerLon, centerLat, centerSource, geoAttempts: attempts };
-    }
-  }
-
-  // 中心点兜底
-  const centerLonStr = `${centerLon}`;
-  const centerLatStr = `${centerLat}`;
-  const centerLocation = await C.clockinGet(C.locationPath(centerLonStr, centerLatStr), ctx.access_token, ctx.workcode, ctx.client_version);
-  if (C.locationAllowsClockin(centerLocation)) {
-    return { lon: centerLonStr, lat: centerLatStr, geoSource: 'location-center-fallback', location: centerLocation, seedLocation, centerLon: centerLonStr, centerLat: centerLatStr, centerSource, geoAttempts: attempts };
-  }
-
-  throw new Error(`无法在 location 中心点附近找到允许打卡的坐标：center=(${centerLonStr}, ${centerLatStr}), attempts=${JSON.stringify(attempts)}`);
+  throw new Error(`调用方提供的坐标不在服务端允许打卡范围内：(${lon}, ${lat})`);
 }
 
 // ── 主打卡流程 ────────────────────────────────────────────────────────────────
 
 async function preparePunch(checkType, opts = {}) {
-  const address = opts.address || '';
-  const ctx = await getAttendanceAuthContext();
+  const input = normalizeAttendanceInput(opts);
+  const address = String(opts.address || '').trim();
+  const ctx = applyAttendanceInput(await getAttendanceAuthContext(input), input);
   const headers = C.authHeaders(ctx.access_token, ctx.workcode, ctx.client_version);
 
-  // 1. 查排班
   const group = await C.clockinGet(C.groupPath(), ctx.access_token, ctx.workcode, ctx.client_version);
   const data = (group || {}).data || {};
   const schedule = data.schedule || [];
   let candidates = schedule.filter(x => x.check_type === checkType);
   if (candidates.length === 0) {
-    // 无排班项（休息日），尝试自由打卡
     candidates = [{ check_type: checkType, has_record: false, record: null, is_current: true }];
   }
 
   const serverDate = String((data.date || {}).date || '');
   const serverTime = String((data.date || {}).time || '');
-
-  // 2. 在任何地理定位或写卡预检前检查已有记录，避免无意义的外部请求。
   const candidateStatuses = candidates.map(c => C.classifyScheduleRecord(c));
   const blockingStatus = candidateStatuses.find(s => s.countsAsCompleted) || null;
   const provisionalStatus = candidateStatuses.find(s => s.isProvisional) || null;
@@ -276,14 +281,12 @@ async function preparePunch(checkType, opts = {}) {
     throw new Error(`${guard.reason} 若确认要覆盖，请加 force=true。`);
   }
 
-  // 3. 随机地理
-  const geo = await resolveRandomizedGeo(ctx);
+  const geo = await resolveProvidedGeo(ctx);
   ctx.lon = geo.lon;
   ctx.lat = geo.lat;
   ctx.geo_source = geo.geoSource;
   saveAttendanceAuth(ctx);
 
-  // 4. 预检 /api/time/result
   const preferred = [];
   const currentItem = candidates.find(x => x.is_current === true);
   if (currentItem) preferred.push(currentItem);
@@ -321,11 +324,9 @@ async function preparePunch(checkType, opts = {}) {
     throw new Error(`${checkType} 所有候选排班项都没通过 /api/time/result 预检：${JSON.stringify(probeErrors)}`);
   }
 
-  // 5. RSA 加密 crc
-  const resolvedAddress = address.trim() || String(record.address || '').trim() || C.OFFICE_DEFAULT_ADDRESS;
+  const resolvedAddress = address || String(record.address || '').trim();
   const crcPlaintext = `${ctx.lat}|${checkDateTime}|${ctx.lon}`;
   const crc = C.rsaPkcs1EncryptHex(crcPlaintext);
-
   const recordFields = {
     work_date: C.workDateStr(),
     check_date_time: checkDateTime,
@@ -333,11 +334,11 @@ async function preparePunch(checkType, opts = {}) {
     user_address: resolvedAddress,
     lon: ctx.lon,
     lat: ctx.lat,
-    device_id: ctx.uuid,
-    brand: C.FAKE_BRAND,
-    model: C.FAKE_MODEL,
-    version: C.FAKE_VERSION,
-    net_info: C.FAKE_NET_INFO,
+    device_id: ctx.device_id || ctx.uuid,
+    brand: ctx.device_brand,
+    model: ctx.device_model,
+    version: ctx.device_version,
+    net_info: ctx.network_type,
     operator_type: '',
     user_ssid: '',
     user_mac_addr: '',
@@ -347,8 +348,7 @@ async function preparePunch(checkType, opts = {}) {
   };
 
   return {
-    ctx, headers, workDate: C.workDateStr(),
-    item, record, hasRecord,
+    ctx, headers, workDate: C.workDateStr(), item, record, hasRecord,
     writeGuard: { requiresForce: guard.requiresForce, reason: guard.reason },
     msgId, serverDate, serverTime, checkDateTime, resolvedAddress,
     geoSource: geo.geoSource, geoAttempts: geo.geoAttempts,
@@ -357,30 +357,20 @@ async function preparePunch(checkType, opts = {}) {
 }
 
 async function doPunch(checkType, opts = {}) {
-  const { address = '', force = false } = opts;
-  const prepared = await preparePunch(checkType, { address, force });
-
-  if (prepared.writeGuard.requiresForce && !force) {
+  const prepared = await preparePunch(checkType, opts);
+  if (prepared.writeGuard.requiresForce && !opts.force) {
     throw new Error(`${prepared.writeGuard.reason} 若确认要覆盖，请加 force=true。`);
   }
 
-  // 6. 写卡 /api/record
   const recordResp = await C.clockinPost('/api/record', prepared.recordFields, prepared.ctx.access_token, prepared.ctx.workcode, prepared.ctx.client_version);
-
-  // 7. 回读验证
   const groupAfter = await C.clockinGet(`/api/group?work_date=${encodeURIComponent(prepared.workDate)}`, prepared.ctx.access_token, prepared.ctx.workcode, prepared.ctx.client_version);
   const scheduleAfter = (((groupAfter || {}).data || {}).schedule) || [];
   const afterCandidates = scheduleAfter.filter(x => x.check_type === checkType);
-  const afterItem =
-    afterCandidates.find(x => x.is_current === true) ||
-    afterCandidates.find(x => x.record) ||
-    (afterCandidates[0] || null);
+  const afterItem = afterCandidates.find(x => x.is_current === true) || afterCandidates.find(x => x.record) || (afterCandidates[0] || null);
   const afterRecord = (afterItem || {}).record || {};
-
   if (!String(afterRecord.check_time || '').trim()) {
     throw new Error(`${checkType} 写卡后回读 check_time 缺失。before=${JSON.stringify(prepared.record)}`);
   }
-
   return {
     check_type: checkType,
     geo_source: prepared.ctx.geo_source,
@@ -392,8 +382,6 @@ async function doPunch(checkType, opts = {}) {
     after: afterRecord,
   };
 }
-
-// ── 导出 ──────────────────────────────────────────────────────────────────────
 
 module.exports = {
   doPunch,

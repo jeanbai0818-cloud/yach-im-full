@@ -1,0 +1,55 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { createRequire } from "node:module";
+
+const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const require = createRequire(import.meta.url);
+const payroll = require("../dist/full/yach-im-full/api/ch7-workbench/payroll/index.js");
+const attendanceClient = require("../dist/full/yach-im-full/api/ch7-workbench/attendance/client.js");
+const attendanceService = require("../dist/full/yach-im-full/api/ch7-workbench/attendance/service.js");
+const { yachPunchOnDuty, yachAttendanceAuthCheck } = await import("../dist/full/yach-im-full/plugin/tools/ch25-attendance.js");
+
+test("发布运行时不包含本机工资条凭据抓取路径", async () => {
+  const source = await fs.readFile(path.join(root, "dist/full/yach-im-full/api/ch7-workbench/payroll/index.js"), "utf8");
+  assert.doesNotMatch(source, /Cookies\.binarycookies|spawnSync|child_process|extractFromBinaryCookies/u);
+  assert.equal(typeof payroll.extractFromBinaryCookies, "undefined");
+  const previous = process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
+  delete process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
+  try {
+    await assert.rejects(() => payroll.refreshPayrollToken(), /YACH_IM_FULL_PAYROLL_ADMIN_TOKEN/u);
+  } finally {
+    if (previous === undefined) delete process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
+    else process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN = previous;
+  }
+});
+
+test("考勤只接受调用方显式坐标和设备标识", async () => {
+  const clientSource = await fs.readFile(path.join(root, "dist/full/yach-im-full/api/ch7-workbench/attendance/client.js"), "utf8");
+  const serviceSource = await fs.readFile(path.join(root, "dist/full/yach-im-full/api/ch7-workbench/attendance/service.js"), "utf8");
+  assert.doesNotMatch(clientSource, /randomGeoAround|fakeOfficeGeo|machine-id|os\.hostname|FAKE_/u);
+  assert.doesNotMatch(serviceSource, /randomGeoAround|fakeOfficeGeo|machine-id|os\.hostname|FAKE_|office-seed/u);
+  assert.deepEqual(yachPunchOnDuty.parameters.required, ["latitude", "longitude", "deviceId", "deviceName"]);
+  assert.deepEqual(yachAttendanceAuthCheck.parameters.required, ["latitude", "longitude", "deviceId", "deviceName"]);
+  assert.throws(
+    () => attendanceClient.buildYachHeaders({ token: "t", workcode: "w" }, "test"),
+    /deviceId 和 deviceName/u,
+  );
+  await assert.rejects(() => attendanceService.getAttendanceAuthContext(), /longitude/u);
+});
+
+test("工资条检查不持久化 token", async () => {
+  const payload = Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, sub: 1, iss: "payroll-api.zhiyinlou.com" })).toString("base64url");
+  const token = `eyJ.${payload}.sig`;
+  const previous = process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
+  process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN = token;
+  try {
+    const result = await payroll.refreshPayrollToken();
+    assert.equal(result.token, "已配置（不回显）");
+    assert.equal(payroll.getConfiguredPayrollToken(), token);
+  } finally {
+    if (previous === undefined) delete process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN;
+    else process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN = previous;
+  }
+});

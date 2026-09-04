@@ -23,6 +23,18 @@ export declare const yachPunchOnDuty: {
     label: string;
     description: string;
     parameters: Type.TObject<{
+        latitude: Type.TNumber;
+        longitude: Type.TNumber;
+        deviceId: Type.TString;
+        deviceName: Type.TString;
+        deviceBrand: Type.TOptional<Type.TString>;
+        deviceModel: Type.TOptional<Type.TString>;
+        deviceVersion: Type.TOptional<Type.TString>;
+        networkType: Type.TOptional<Type.TString>;
+        systemVersion: Type.TOptional<Type.TString>;
+        platform: Type.TOptional<Type.TString>;
+        clientVersion: Type.TOptional<Type.TString>;
+        clientRelease: Type.TOptional<Type.TString>;
         force: Type.TOptional<Type.TBoolean>;
         address: Type.TOptional<Type.TString>;
     }>;
@@ -34,6 +46,18 @@ export declare const yachPunchOffDuty: {
     label: string;
     description: string;
     parameters: Type.TObject<{
+        latitude: Type.TNumber;
+        longitude: Type.TNumber;
+        deviceId: Type.TString;
+        deviceName: Type.TString;
+        deviceBrand: Type.TOptional<Type.TString>;
+        deviceModel: Type.TOptional<Type.TString>;
+        deviceVersion: Type.TOptional<Type.TString>;
+        networkType: Type.TOptional<Type.TString>;
+        systemVersion: Type.TOptional<Type.TString>;
+        platform: Type.TOptional<Type.TString>;
+        clientVersion: Type.TOptional<Type.TString>;
+        clientRelease: Type.TOptional<Type.TString>;
         force: Type.TOptional<Type.TBoolean>;
         address: Type.TOptional<Type.TString>;
     }>;
@@ -44,8 +68,23 @@ export declare const yachAttendanceAuthCheck: {
     name: string;
     label: string;
     description: string;
-    parameters: Type.TObject<{}>;
-    execute(_id: string, _params: any): Promise<ToolResult>;
+    parameters: Type.TObject<{
+        latitude: Type.TNumber;
+        longitude: Type.TNumber;
+        deviceId: Type.TString;
+        deviceName: Type.TString;
+        deviceBrand: Type.TOptional<Type.TString>;
+        deviceModel: Type.TOptional<Type.TString>;
+        deviceVersion: Type.TOptional<Type.TString>;
+        networkType: Type.TOptional<Type.TString>;
+        systemVersion: Type.TOptional<Type.TString>;
+        platform: Type.TOptional<Type.TString>;
+        clientVersion: Type.TOptional<Type.TString>;
+        clientRelease: Type.TOptional<Type.TString>;
+        force: Type.TOptional<Type.TBoolean>;
+        address: Type.TOptional<Type.TString>;
+    }>;
+    execute(_id: string, params: any): Promise<ToolResult>;
 };
 export {};
 //# sourceMappingURL=ch25-attendance.d.ts.map

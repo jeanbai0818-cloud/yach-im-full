@@ -322,7 +322,7 @@ export declare const yachGetAttendanceInfo: {
     parameters: Type.TObject<{}>;
     execute(_id: string, _params: any): Promise<ToolResult>;
 };
-/** ⭐ 提取/刷新工资条 admin_token（从 App Cookie 文件自动提取）*/
+/** ⭐ 检查工资条 admin_token（仅使用显式受控配置）*/
 export declare const yachRefreshPayrollToken: {
     name: string;
     label: string;

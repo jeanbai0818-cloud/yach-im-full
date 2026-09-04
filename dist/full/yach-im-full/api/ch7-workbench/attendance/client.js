@@ -8,12 +8,11 @@
  *   1. capi session → /94capi/ucenter/auth/code → 拿 auth_code
  *   2. auth_code → clockin-api /login/code → 拿打卡 access_token (Bearer)
  *   3. /api/group → 查排班 → /api/time/result → 预检
- *   4. /api/location → 随机地理 → RSA 加密 crc → /api/record → 写卡
+ *   4. 调用方坐标 → /api/location 校验 → RSA 加密 crc → /api/record → 写卡
  */
 
 const crypto = require('crypto');
 const https = require('https');
-const os = require('os');
 const { URL, URLSearchParams } = require('url');
 const { loadSession } = require('../../../auth/session');
 const { getSign } = require('../../../utils/sign');
@@ -32,22 +31,6 @@ const RSA_MOD_INT = BigInt('0x' + RSA_MOD_HEX);
 const RSA_EXP_INT = 65537n;
 const RSA_KEY_BYTES = Number(BigInt(RSA_MOD_INT.toString(2).length + 7) >> 3n);
 
-// 办公室坐标
-const OFFICE_BASE_LON = 116.31489783525467;
-const OFFICE_BASE_LAT = 40.106470873147195;
-const OFFICE_DEFAULT_ADDRESS = '北京市昌平区安居路靠近好未来大楼';
-
-// 设备伪装
-const FAKE_BRAND = 'Apple';
-const FAKE_MODEL = 'iPad8,6';
-const FAKE_VERSION = '26.4';
-const FAKE_NET_INFO = 'wifi';
-
-// 地理随机化
-const OFFICE_GEO_SEED_METERS = 100.0;
-const RANDOMIZED_GEO_RADIUS_METERS = 300.0;
-const RANDOMIZED_GEO_MAX_ATTEMPTS = 12;
-
 const DEFAULT_CLIENT_VERSION = '1.9.19.12';
 const WORK_DATE_FMT_SUFFIX = 'T00:00:00.000Z';
 
@@ -57,7 +40,7 @@ const WORK_DATE_FMT_SUFFIX = 'T00:00:00.000Z';
  * 从插件 session 文件加载知音楼登录态
  * @returns {{token, gtoken, workcode, deptid, cloudtoken}|null}
  */
-function loadPluginSession() {
+function loadPluginSession(overrides = {}) {
   const s = loadSession();
   if (!s.token || !s.workcode) return null;
   return {
@@ -66,6 +49,14 @@ function loadPluginSession() {
     workcode: s.workcode,
     deptid: s.deptid || '',
     cloudtoken: s.cloudtoken || '',
+    deviceId: String(overrides.deviceId || '').trim(),
+    deviceName: String(overrides.deviceName || '').trim(),
+    deviceBrand: String(overrides.deviceBrand || '').trim(),
+    deviceModel: String(overrides.deviceModel || '').trim(),
+    deviceVersion: String(overrides.deviceVersion || '').trim(),
+    networkType: String(overrides.networkType || '').trim(),
+    systemVersion: String(overrides.systemVersion || '').trim(),
+    platform: String(overrides.platform || '').trim(),
   };
 }
 
@@ -113,12 +104,12 @@ function buildYachSignature(payload = {}) {
   return { sign: crypto.createHash('md5').update(src).digest('hex'), timestamp };
 }
 
-function deriveDeviceId() {
-  const seed = `yach-omni|${os.hostname()}|${os.homedir()}`;
-  return crypto.createHash('md5').update(seed).digest('hex').slice(0, 32);
-}
-
 function buildYachHeaders(session, url, payload = {}) {
+  const deviceId = String(session.deviceId || '').trim();
+  const deviceName = String(session.deviceName || '').trim();
+  if (!deviceId || !deviceName) {
+    throw new Error('考勤请求必须由调用方显式提供 deviceId 和 deviceName；插件不会生成或伪造设备标识。');
+  }
   const { sign, timestamp } = buildYachSignature(payload);
   return {
     Authorization: session.token,
@@ -128,12 +119,12 @@ function buildYachHeaders(session, url, payload = {}) {
     HTTP_CONTENT_LANGUAGE: 'zh-CN',
     sign,
     timestamp: String(timestamp),
-    os: process.platform,
-    'device-id': deriveDeviceId(),
-    'device-name': os.hostname() || 'yach-agent',
-    'system-ver': `${process.platform} ${os.release()}`,
+    os: session.platform || process.platform,
+    'device-id': deviceId,
+    'device-name': deviceName,
+    'system-ver': session.systemVersion || '',
     'client-ver': '.5.0',
-    traceid: `${deriveDeviceId().slice(0, 12)}-${timestamp}-${url}`,
+    traceid: `${deviceId.slice(0, 12)}-${timestamp}-${url}`,
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
   };
 }
@@ -264,23 +255,6 @@ function rsaPkcs1EncryptHex(plaintext) {
   return padded;
 }
 
-// ── 地理随机化 ────────────────────────────────────────────────────────────────
-
-function randomGeoAround(centerLon, centerLat, maxMeters) {
-  const r = maxMeters * Math.sqrt(Math.random());
-  const theta = Math.random() * 2 * Math.PI;
-  const dx = r * Math.cos(theta);
-  const dy = r * Math.sin(theta);
-  const dlat = dy / 111111.0;
-  const cosLat = Math.cos(centerLat * Math.PI / 180);
-  const dlon = cosLat < 1e-6 ? 0 : dx / (111111.0 * cosLat);
-  return [`${centerLon + dlon}`, `${centerLat + dlat}`];
-}
-
-function fakeOfficeGeo(maxMeters = OFFICE_GEO_SEED_METERS) {
-  return randomGeoAround(OFFICE_BASE_LON, OFFICE_BASE_LAT, maxMeters);
-}
-
 // ── 时间 ──────────────────────────────────────────────────────────────────────
 
 function workDateStr() {
@@ -350,34 +324,13 @@ function writeGuard(checkType, blockingStatus, provisionalStatus) {
   return { requiresForce: false, reason: (provisionalStatus || {}).reason || '' };
 }
 
-// ── 地理随机化解析 ───────────────────────────────────────────────────────────
-
-function resolveRandomizedGeo(ctx, headers) {
-  const [seedLon, seedLat] = [ctx.lon, ctx.lat];
-  const seedLocation = clockinGet(locationPath(seedLon, seedLat), ctx.accessToken, ctx.workcode, ctx.clientVersion);
-
-  // 由于 httpGet 是 async 的，这里需要 async
-  // 实际实现见 service.js
-  return null; // placeholder, 实际在 service 中调用
-}
-
 // ── 导出 ──────────────────────────────────────────────────────────────────────
 
 module.exports = {
   // 常量
   CLOCKIN_API_BASE,
   CAPI_BASE,
-  OFFICE_BASE_LON,
-  OFFICE_BASE_LAT,
-  OFFICE_DEFAULT_ADDRESS,
-  OFFICE_GEO_SEED_METERS,
-  RANDOMIZED_GEO_RADIUS_METERS,
-  RANDOMIZED_GEO_MAX_ATTEMPTS,
   DEFAULT_CLIENT_VERSION,
-  FAKE_BRAND,
-  FAKE_MODEL,
-  FAKE_VERSION,
-  FAKE_NET_INFO,
   RSA_KEY_BYTES,
 
   // session
@@ -387,7 +340,6 @@ module.exports = {
   genGtoken,
   buildYachSignature,
   buildYachHeaders,
-  deriveDeviceId,
 
   // HTTP
   httpGet,
@@ -401,8 +353,6 @@ module.exports = {
   rsaPkcs1EncryptHex,
 
   // 地理
-  randomGeoAround,
-  fakeOfficeGeo,
   extractLocationCenter,
   locationAllowsClockin,
 

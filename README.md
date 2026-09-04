@@ -61,6 +61,8 @@ runtime 入口，并配套 `setupEntry`/`runtimeSetupEntry`。二维码登录、
 
 多账号配置使用 `channels["yach-im-full"].accounts.<accountId>`。`connectionMode` 固定为 `channel`；`appKey/appSecret` 支持明文或 OpenClaw `SecretRef`。密钥只在 Gateway `full` 运行时解析，Discovery 和 setup-only 阶段不会建立网络连接。
 
+工资条能力是显式配置的可选能力：仅从受控 SecretRef 对应的环境变量 `YACH_IM_FULL_PAYROLL_ADMIN_TOKEN` 读取短期 admin_token，不读取本机应用、浏览器或系统凭据文件，不写入 yach-im-full session。未配置时，`yach_refresh_payroll_token` 会明确提示配置缺失并停止。
+
 安装后使用标准向导，不需要手动编辑配置文件：
 
 ```bash
@@ -98,12 +100,16 @@ openclaw channels status --channel yach-im-full
 
 如果显式把 `groupPolicy` 改为 `open`，OpenClaw 标准安全审计会显示群开放风险提示；生产环境应保持 `allowlist` 并填写 `groupAllowFrom`。
 
-## 安装 `2026.9.4-7`
+### 考勤工具的安全边界
 
-手工安装包：`tal-yach-im-full-2026.9.4-7.tgz`。
+`yach_punch_on_duty`、`yach_punch_off_duty` 和 `yach_attendance_auth_check` 保留在完整工具集中，但每次都要求调用方显式提供本次真实 `latitude`、`longitude`、`deviceId` 和 `deviceName`；插件只把坐标交给知音楼服务端校验，不生成坐标、不读取主机硬件标识、不构造设备身份。两种打卡仍属于高风险外部写操作，必须经过 OpenClaw 逐次确认。
+
+## 安装 `2026.9.4-8`
+
+手工安装包：`tal-yach-im-full-2026.9.4-8.tgz`。
 
 ```bash
-openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-7.tgz --force --accept-capabilities
+openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-8.tgz --force --accept-capabilities
 openclaw channels add --channel yach-im-full --app-key '<appKey>' --app-secret '<appSecret>'
 openclaw config validate
 openclaw channels list --all
@@ -177,10 +183,11 @@ openclaw config validate
 
 ### 合规运行时约束
 
-- 287 个迁移工具全部保留在 `contracts.tools`；涉及消息发送、组织修改等外部副作用的工具标记为 `sideEffecting` 并要求显式确认，查询组织/消息/会话等敏感工具要求通过 `tools.allow` 显式启用。
+- 287 个迁移工具全部保留在 `contracts.tools`；涉及消息发送、组织修改、考勤写卡或敏感工资条凭据检查的工具标记为 `sideEffecting` 并要求显式确认，查询组织/消息/会话等敏感工具要求通过 `tools.allow` 显式启用。
 - `tool-discovery` 只发布工具能力，不启动 NIM、后台 service 或 HTTP 路由；setup 入口使用 bundled setup contract，不加载 Channel SDK/OAPI/NIM 运行时。
 - 入站消息在进入 OpenClaw context 前经过官方 channel ingress resolver；私聊默认 pairing，群聊默认 allowlist。
 - `/plugin/yach-im-full/*` 路由统一使用 Gateway 认证；二维码登录和 session 文件只属于 `yach-im-full`，不读取旧 `haoweilai-agent` session。
+- 工资条 admin_token 不从本机 Cookie/浏览器存储提取，也不写入 session；考勤坐标和设备字段必须由调用方显式提供并由服务端校验。
 
 ## 迁移分析
 

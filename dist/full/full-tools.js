@@ -46,6 +46,7 @@ for (const name of [
     "yach_intelloft_vote",
     "yach_change_intelloft_option",
     "yach_sort_session_top",
+    "yach_refresh_payroll_token",
 ]) {
     sideEffectingToolNames.add(name);
 }

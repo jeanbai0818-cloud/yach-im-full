@@ -27,7 +27,7 @@ test("full migration exports the complete unique 287-tool registry", () => {
 });
 
 test("every side-effecting migrated tool advertises confirmation", () => {
-  assert.equal(sideEffectingToolNames.size, 133);
+  assert.equal(sideEffectingToolNames.size, 134);
   for (const tool of fullTools.filter((candidate) => sideEffectingToolNames.has(candidate.name))) {
     assert.match(String(tool.description ?? ""), /(确认|授权)/u, `${tool.name} must advertise confirmation`);
     assert.equal(manifest.toolMetadata[tool.name].sideEffecting, true);

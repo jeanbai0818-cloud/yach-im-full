@@ -3,12 +3,9 @@
  *
  * ⚠️ 认证特殊说明：
  *   payroll-api 域名做了 Certificate Pinning，与 yach-capi 完全独立。
- *   认证走 JWT（admin_token），有效期 1 小时，来源两种：
- *     1. 自动读取：从 App 沙盒 Cookies.binarycookies 提取（macOS/iPad 本机有效）
- *     2. 手动注入：将 admin_token 存入 session 的 payroll_token 字段
- *
- *   admin_token 刷新流程需要 App 原生生成 Laravel 加密 token（走 pinned 域名），
- *   目前无法全自动刷新，需用户打开知音楼工资条页面后提取。
+ *   认证走 JWT（admin_token），有效期 1 小时；本插件只接受
+ *   YACH_IM_FULL_PAYROLL_ADMIN_TOKEN 环境变量中的显式配置，不读取浏览器、桌面
+ *   应用或系统 Cookie，也不会把工资条凭据写入 session 或其他本地文件。
  *
  * 实测接口（2026-07-14）：
  *   POST api/ding/payroll       ✅ 当月/翻页工资条详情（核心接口）
@@ -22,10 +19,7 @@
  */
 
 const https = require('https');
-const os = require('os');
 const querystring = require('querystring');
-const { loadSession } = require('../../../auth/session');
-const { spawnSync } = require('child_process');
 
 const PAYROLL_BASE = 'https://payroll-api.zhiyinlou.com';
 const PAYROLL_ORIGIN = 'https://payroll.zhiyinlou.com';
@@ -35,24 +29,19 @@ const YACH_APPID = '372229400';
 
 // ── token 管理 ─────────────────────────────────────────────────────────────
 
-/**
- * 获取有效的 admin_token：
- *   1. session.payroll_token（手动注入或上次登录缓存）
- *   2. 从 App 沙盒 Cookies.binarycookies 自动提取（macOS 本机）
- * @returns {string} JWT
- */
+/** 获取显式配置的有效 admin_token。 */
 function getAdminToken() {
-  const session = loadSession();
-  if (session.payroll_token && isTokenValid(session.payroll_token)) {
-    return session.payroll_token;
-  }
-  // 尝试从 App Cookie 文件自动提取
-  const extracted = extractFromBinaryCookies();
-  if (extracted) return extracted;
+  const token = getConfiguredPayrollToken();
+  if (token && isTokenValid(token)) return token;
   throw new Error(
-    'payroll admin_token 不存在或已过期（1小时有效期）。\n' +
-    '请先在知音楼 App 打开工资条页面，然后调用 yach_refresh_payroll_token 提取 token。'
+    '工资条凭据缺失或已过期（admin_token 有效期约 1 小时）。\n' +
+    '请由管理员通过受控 SecretRef 或环境变量 YACH_IM_FULL_PAYROLL_ADMIN_TOKEN 配置，' +
+    '然后再调用 yach_refresh_payroll_token。插件不会读取本机应用、浏览器或系统凭据文件。'
   );
+}
+
+function getConfiguredPayrollToken() {
+  return String(process.env.YACH_IM_FULL_PAYROLL_ADMIN_TOKEN || '').trim();
 }
 
 /**
@@ -65,58 +54,6 @@ function isTokenValid(jwt) {
   } catch {
     return false;
   }
-}
-
-/**
- * 从 App 沙盒 Cookies.binarycookies 自动提取 payroll admin_token
- * 仅 macOS 本机有效，需知音楼 App 已打开过工资条页面
- * @returns {string|null}
- */
-function extractFromBinaryCookies() {
-  // 知音楼 iPad 和 Mac 沙盒容器路径
-  const homeDir = os.homedir();
-  const COOKIE_PATHS = [
-    `${homeDir}/Library/Containers/com.100tal.yach.ipad/Data/Library/Cookies/Cookies.binarycookies`,
-    `${homeDir}/Library/Containers/com.100tal.yach.mac/Data/Library/Cookies/Cookies.binarycookies`,
-    `${homeDir}/Library/Containers/com.100tal.yach/Data/Library/Cookies/Cookies.binarycookies`,
-  ];
-  for (const p of COOKIE_PATHS) {
-    try {
-      const fs = require('fs');
-      if (!fs.existsSync(p)) continue;
-      // 使用参数数组调用 strings，避免把路径拼进 shell 命令。
-      const result = spawnSync('strings', [p], {
-        encoding: 'utf8',
-        timeout: 5000,
-        maxBuffer: 8 * 1024 * 1024,
-      });
-      const out = String(result.stdout || '').trim();
-      if (!out) continue;
-      const tokens = out.split('\n').filter(t => t.startsWith('eyJ'));
-      for (const tok of tokens) {
-        if (!isTokenValid(tok)) continue;
-        try {
-          const payload = JSON.parse(Buffer.from(tok.split('.')[1], 'base64').toString());
-          // 找 iss 为 payroll-api 的 JWT（排除 hrssc-api JWT）
-          if (payload.iss && payload.iss.includes('payroll-api.zhiyinlou.com')) {
-            return tok;
-          }
-        } catch { continue; }
-      }
-    } catch { continue; }
-  }
-  return null;
-}
-
-/**
- * 把 admin_token 存入 session（延长可用时间）
- */
-function cacheAdminToken(token) {
-  try {
-    const { saveSession } = require('../../../auth/session');
-    const session = loadSession();
-    saveSession({ ...session, payroll_token: token });
-  } catch { /* 缓存失败不影响主流程 */ }
 }
 
 // ── HTTP 请求 ───────────────────────────────────────────────────────────────
@@ -156,7 +93,7 @@ function payrollPost(path, body = {}) {
       res.on('end', () => {
         const raw = Buffer.concat(chunks).toString('utf8');
         if (res.statusCode === 401) {
-          reject(new Error('payroll admin_token 已过期，请重新打开知音楼工资条页面后提取 token'));
+          reject(new Error('payroll admin_token 已过期，请更新受控配置 YACH_IM_FULL_PAYROLL_ADMIN_TOKEN'));
           return;
         }
         if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -225,26 +162,18 @@ function payrollGet(path, params = {}) {
 
 // ── 业务接口 ───────────────────────────────────────────────────────────────
 
-/**
- * 提取/刷新 admin_token
- * 先尝试从 App Cookie 文件自动提取，失败时抛出操作指引
- * @returns {{ token: string, exp: Date, sub: number }}
- */
+/** 检查显式配置的 admin_token，不回显、不持久化凭据。 */
 async function refreshPayrollToken() {
-  const token = extractFromBinaryCookies();
-  if (!token) {
+  const token = getConfiguredPayrollToken();
+  if (!token || !isTokenValid(token)) {
     throw new Error(
-      '未能从 App Cookie 文件提取 payroll token。\n' +
-      '请确认：\n' +
-      '1. 知音楼 App 已安装在本机（Mac/iPad）\n' +
-      '2. 已在 App 内打开"工资条"页面（5分钟内）\n' +
-      '3. 运行环境可访问 ~/Library/Containers/com.100tal.yach.*/Data/Library/Cookies/'
+      '未配置有效的工资条 admin_token。请通过 SecretRef 或环境变量 ' +
+      'YACH_IM_FULL_PAYROLL_ADMIN_TOKEN 显式提供；不会自动读取本机应用或浏览器凭据。'
     );
   }
-  cacheAdminToken(token);
   const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
   return {
-    token: token.slice(0, 20) + '...(已缓存)',
+    token: '已配置（不回显）',
     exp: new Date(payload.exp * 1000).toLocaleString('zh-CN'),
     sub: payload.sub,
     iss: payload.iss,
@@ -329,6 +258,6 @@ module.exports = {
   getPayrollHistory,
   // 内部工具（供测试用）
   getAdminToken,
+  getConfiguredPayrollToken,
   isTokenValid,
-  extractFromBinaryCookies,
 };
