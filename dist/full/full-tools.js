@@ -1,36 +1,12 @@
-// yach-im-full's migrated communication, group, discussion, and organization
-// domains. These descriptors are schema-only at registration time; their
-// CommonJS API implementations are loaded by execute().
-import * as ch1 from "./yach-im-full/plugin/tools/ch1-messaging.js";
-import * as ch2 from "./yach-im-full/plugin/tools/ch2-groups.js";
-import * as ch9 from "./yach-im-full/plugin/tools/ch9-org.js";
-import * as ch10 from "./yach-im-full/plugin/tools/ch10-announcement.js";
-import * as ch11 from "./yach-im-full/plugin/tools/ch11-group-apply.js";
-import * as ch12 from "./yach-im-full/plugin/tools/ch12-external-contact.js";
-import * as ch13 from "./yach-im-full/plugin/tools/ch13-session-top.js";
-import * as ch14 from "./yach-im-full/plugin/tools/ch14-group-emot.js";
-import * as ch15 from "./yach-im-full/plugin/tools/ch15-avatar.js";
-import * as ch16 from "./yach-im-full/plugin/tools/ch16-sidebar.js";
-import * as ch17 from "./yach-im-full/plugin/tools/ch17-discuss.js";
-import * as ch21 from "./yach-im-full/plugin/tools/ch21-vote.js";
+// The complete tool index is imported once so the 287-tool registry cannot
+// drift when a new migrated domain is added. Each descriptor remains lazy:
+// its business API is loaded by execute(), not during plugin discovery.
+import * as allTools from "./yach-im-full/plugin/tools/index.js";
 
 const exportedTools = (module) => Object.values(module).filter((value) =>
     value && typeof value === "object" && typeof value.name === "string" && typeof value.execute === "function");
 
-export const fullTools = [
-    ...exportedTools(ch1),
-    ...exportedTools(ch2),
-    ...exportedTools(ch9),
-    ...exportedTools(ch10),
-    ...exportedTools(ch11),
-    ...exportedTools(ch12),
-    ...exportedTools(ch13),
-    ...exportedTools(ch14),
-    ...exportedTools(ch15),
-    ...exportedTools(ch16),
-    ...exportedTools(ch17),
-    ...exportedTools(ch21),
-];
+export const fullTools = exportedTools(allTools);
 
 const toolNames = fullTools.map((tool) => tool.name);
 if (new Set(toolNames).size !== toolNames.length) {
@@ -40,24 +16,53 @@ if (new Set(toolNames).size !== toolNames.length) {
 export const fullToolNames = toolNames;
 
 // Side-effecting tools stay available, but require explicit tool opt-in and a
-// per-call plugin approval. This is the OpenClaw distinction between exposing a
-// capability and authorizing one external-state change.
-export const sideEffectingToolNames = new Set([
-    "yach_send_message", "yach_send_group_text", "yach_send_card", "yach_send_vote",
-    "yach_send_at_message", "yach_recall_message", "yach_send_robot_message",
-    "yach_add_group_users", "yach_change_group_owner", "yach_create_group", "yach_dismiss_group",
-    "yach_edit_group_info", "yach_mute_group", "yach_quit_group", "yach_remove_group_users",
-    "yach_set_group_admin", "yach_set_user_info", "yach_set_workstate",
-    "yach_create_group_announcement", "yach_delete_group_announcement", "yach_set_group_announcement_top",
-    "yach_update_group_announcement", "yach_accept_group_apply", "yach_batch_group_apply",
-    "yach_ignore_group_apply", "yach_reject_group_apply", "yach_add_external_contact",
-    "yach_delete_external_contact", "yach_handle_external_apply", "yach_add_session_top",
-    "yach_remove_session_top", "yach_set_session_top_config", "yach_sort_session_top",
-    "yach_add_group_emot", "yach_upload_avatar", "yach_set_side_bar_conf", "yach_add_side_bar_nav",
-    "yach_del_side_bar_nav", "yach_create_discuss_group", "yach_dismiss_discuss_group",
-    "yach_join_discuss_group", "yach_set_discuss_group_title", "yach_add_user_to_discussion",
-    "yach_add_vote_choice", "yach_intelloft_vote",
-]);
+// per-call plugin approval. The prefix list is intentionally broad: a newly
+// migrated write capability must fail closed instead of becoming an
+// unapproved external mutation because it was omitted from a hand-maintained
+// list.
+const SIDE_EFFECTING_PREFIXES = [
+    "yach_add_", "yach_accept_", "yach_ask_", "yach_aiseek_", "yach_batch_",
+    "yach_book_", "yach_cancel_", "yach_change_", "yach_comment_", "yach_confirm_",
+    "yach_continue_", "yach_convert_", "yach_create_", "yach_del_", "yach_delete_", "yach_dismiss_",
+    "yach_edit_", "yach_feedback_", "yach_follow_", "yach_handle_", "yach_ignore_",
+    "yach_install_", "yach_join_", "yach_lore_node_add", "yach_lore_node_collaborators_add",
+    "yach_lore_node_collaborators_del", "yach_lore_node_collaborators_edit", "yach_lore_node_delete",
+    "yach_lore_node_drag", "yach_lore_node_rename", "yach_lore_node_share_set_",
+    "yach_lore_space_auth_add", "yach_lore_space_auth_del", "yach_lore_space_auth_edit",
+    "yach_lore_upload_", "yach_lore_write_", "yach_mark_", "yach_mute_", "yach_oapi_message_single_send",
+    "yach_punch_", "yach_quit_", "yach_recall_", "yach_reject_", "yach_regenerate_",
+    "yach_remove_", "yach_rename_", "yach_respond_", "yach_save_", "yach_send_",
+    "yach_set_", "yach_share_", "yach_stop_", "yach_submit_", "yach_sync_", "yach_top_",
+    "yach_unfollow_", "yach_update_", "yach_upload_", "yach_use_", "yach_zan_",
+];
+
+export const sideEffectingToolNames = new Set(
+    fullToolNames.filter((name) => SIDE_EFFECTING_PREFIXES.some((prefix) => name.startsWith(prefix))),
+);
+
+// These are writes that do not start with a generic CRUD/send prefix.
+for (const name of [
+    "yach_ai_image_comeducation",
+    "yach_intelloft_vote",
+    "yach_change_intelloft_option",
+    "yach_sort_session_top",
+]) {
+    sideEffectingToolNames.add(name);
+}
+// Batch file-info is a read-only lookup despite sharing the batch prefix.
+sideEffectingToolNames.delete("yach_batch_get_file_info");
+
+// Keep the user-facing contract honest for migrated descriptors that came
+// from older tool modules and only said "write" or "send" without an explicit
+// confirmation requirement. The runtime approval hook below is the guardrail;
+// this text makes the same rule visible to the agent before execution.
+for (const tool of fullTools) {
+    if (!sideEffectingToolNames.has(tool.name))
+        continue;
+    const description = String(tool.description ?? "");
+    if (!/(确认|授权)/u.test(description))
+        tool.description = `${description.replace(/[。！!]?$/u, "")}，执行前需用户确认。`;
+}
 
 // These tools return message, organization, personal, or platform data. They
 // remain in the package and in the manifest, but an operator must explicitly
@@ -76,10 +81,10 @@ export const sensitiveToolNames = new Set([
     "yach_get_discuss_msg_list", "yach_get_vote_detail", "yach_get_vote_count",
 ]);
 
-export const optionalToolNames = new Set([
-    ...sideEffectingToolNames,
-    ...sensitiveToolNames,
-]);
+// All migrated business tools are opt-in capabilities. This keeps discovery
+// safe by default while allowing an operator to enable the complete package
+// with tools.alsoAllow: ["yach-im-full"].
+export const optionalToolNames = new Set(fullToolNames);
 
 export function registerFullTools(api) {
     for (const tool of fullTools) {

@@ -1,0 +1,1 @@
+{"version":3,"file":"ch28-others.d.ts","sourceRoot":"","sources":["../../../src/plugin/tools/ch28-others.ts"],"names":[],"mappings":"AAAA;;GAEG;AACH,OAAO,EAAE,IAAI,EAAE,MAAM,SAAS,CAAC;AAG/B,KAAK,UAAU,GAAG;IAAE,OAAO,EAAE;QAAE,IAAI,EAAE,MAAM,CAAC;QAAC,IAAI,EAAE,MAAM,CAAA;KAAE,EAAE,CAAC;IAAC,OAAO,EAAE,OAAO,CAAA;CAAE,CAAC;AAMlF,eAAO,MAAM,uBAAuB;;;;;;;iBAOf,MAAM,UAAU,GAAG;CAKvC,CAAC"}

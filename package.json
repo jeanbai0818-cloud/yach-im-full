@@ -1,6 +1,6 @@
 {
   "name": "@tal/yach-im-full",
-  "version": "2026.9.4-6",
+  "version": "2026.9.4-7",
   "description": "OpenClaw Yach IM (知音楼) channel with QR login and NIM long connection",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,14 +13,17 @@
     "openclaw.plugin.json",
     "README.md",
     "docs",
+    "scripts",
     "package.json",
     "package-lock.json"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && npm run check",
+    "tools:sync": "node scripts/sync-tools.mjs",
+    "tools:check": "node scripts/sync-tools.mjs --check",
+    "build": "npm run tools:sync && tsc -p tsconfig.json && npm run check",
     "check": "tsc -p tsconfig.json --noEmit && find dist -type f \\( -name '*.js' -o -name '*.cjs' \\) -print0 | xargs -0 -n1 node --check",
     "dev": "tsc -p tsconfig.json --watch",
-    "test": "npm run check && node --test test/**/*.test.mjs",
+    "test": "npm run check && npm run tools:check && node --test test/**/*.test.mjs",
     "pack:check": "npm run check && npm pack --dry-run"
   },
   "peerDependencies": {
@@ -50,15 +53,21 @@
     "xmlhttprequest-ssl": "^4.0.0"
   },
   "openclaw": {
-    "extensions": ["./src/index.ts"],
-    "runtimeExtensions": ["./dist/index.js"],
+    "extensions": [
+      "./src/index.ts"
+    ],
+    "runtimeExtensions": [
+      "./dist/index.js"
+    ],
     "setupEntry": "./src/setup-entry.ts",
     "runtimeSetupEntry": "./dist/setup-entry.js",
     "channel": {
       "id": "yach-im-full",
       "label": "Yach IM Full",
       "selectionLabel": "Yach IM Full (知音楼)",
-      "aliases": ["zhiyinlou"],
+      "aliases": [
+        "zhiyinlou"
+      ],
       "docsPath": "/channels/yach-im-full",
       "blurb": "知音楼企业 IM，Channel SDK 机器人通道 + NIM 登录长连接。",
       "order": 80,
@@ -93,7 +102,12 @@
           {
             "key": "groupResponseMode",
             "kind": "choice",
-            "choices": ["all", "humans", "mentions", "paired"],
+            "choices": [
+              "all",
+              "humans",
+              "mentions",
+              "paired"
+            ],
             "cli": {
               "flags": "--group-response-mode <mode>",
               "description": "Yach IM group response mode"
@@ -106,7 +120,10 @@
               "flags": "--use-env",
               "description": "Use YACH_IM_APP_KEY and YACH_IM_APP_SECRET"
             },
-            "envVars": ["YACH_IM_APP_KEY", "YACH_IM_APP_SECRET"],
+            "envVars": [
+              "YACH_IM_APP_KEY",
+              "YACH_IM_APP_SECRET"
+            ],
             "envVarMode": "all"
           }
         ]
@@ -128,5 +145,6 @@
       "openclawVersion": "2026.8.2",
       "pluginSdkVersion": "2026.8.2"
     }
-  }
+  },
+  "tools_count": 287
 }

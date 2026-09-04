@@ -32,9 +32,9 @@ npm run pack:check
 runtime 入口，并配套 `setupEntry`/`runtimeSetupEntry`。二维码登录、NIM SDK 和浏览器
 兼容层只在 full runtime 或实际执行登录命令时延迟加载。
 
-好未来 Agent 项目的 36 业务域按用户指定范围迁移了即时通信与会话、群组与组织管理及其直接配套域：共 12 个 API 域、88 个 Agent 工具；未迁移 AI、文档、日程、考勤等无关域。
+好未来 Agent 项目的 36 个业务域已全部迁移到 `yach-im-full`：共 287 个唯一 Agent 工具，覆盖即时通信、群组组织、日程会议、文档知识库、文件、考勤、OKR/周报、AI、搜索提醒、企业邮件和开放平台能力。
 
-迁移范围包含：消息收发/撤回/历史/搜索/@/卡片/投票/语音转文字、会话与未读、建群与成员管理、群公告、入群申请、组织通讯录/部门/个人状态、外部联系人、群表情、头像、侧边栏、讨论组和投票。
+迁移范围包含参考工程 capability map 中的全部 36 个业务域；完整的工具名、来源模块和副作用标记见自动生成的 [`docs/CAPABILITY-MAP.md`](docs/CAPABILITY-MAP.md)。
 
 ## 配置
 
@@ -98,12 +98,12 @@ openclaw channels status --channel yach-im-full
 
 如果显式把 `groupPolicy` 改为 `open`，OpenClaw 标准安全审计会显示群开放风险提示；生产环境应保持 `allowlist` 并填写 `groupAllowFrom`。
 
-## 安装 `2026.9.4-6`
+## 安装 `2026.9.4-7`
 
-手工安装包：`tal-yach-im-full-2026.9.4-6.tgz`。
+手工安装包：`tal-yach-im-full-2026.9.4-7.tgz`。
 
 ```bash
-openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-6.tgz --force --accept-capabilities
+openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-7.tgz --force --accept-capabilities
 openclaw channels add --channel yach-im-full --app-key '<appKey>' --app-secret '<appSecret>'
 openclaw config validate
 openclaw channels list --all
@@ -177,7 +177,7 @@ openclaw config validate
 
 ### 合规运行时约束
 
-- 88 个迁移工具全部保留在 `contracts.tools`；涉及消息发送、组织修改等外部副作用的工具标记为 `sideEffecting` 并要求显式确认，查询组织/消息/会话等敏感工具要求通过 `tools.allow` 显式启用。
+- 287 个迁移工具全部保留在 `contracts.tools`；涉及消息发送、组织修改等外部副作用的工具标记为 `sideEffecting` 并要求显式确认，查询组织/消息/会话等敏感工具要求通过 `tools.allow` 显式启用。
 - `tool-discovery` 只发布工具能力，不启动 NIM、后台 service 或 HTTP 路由；setup 入口使用 bundled setup contract，不加载 Channel SDK/OAPI/NIM 运行时。
 - 入站消息在进入 OpenClaw context 前经过官方 channel ingress resolver；私聊默认 pairing，群聊默认 allowlist。
 - `/plugin/yach-im-full/*` 路由统一使用 Gateway 认证；二维码登录和 session 文件只属于 `yach-im-full`，不读取旧 `haoweilai-agent` session。

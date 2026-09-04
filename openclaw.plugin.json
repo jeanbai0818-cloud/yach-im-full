@@ -2,134 +2,1383 @@
   "id": "yach-im-full",
   "name": "Yach IM Full",
   "description": "知音楼企业 IM 聊天通道，支持扫码登录和 NIM 长连接",
-  "version": "2026.9.4-6",
-  "channels": ["yach-im-full"],
+  "version": "2026.9.4-7",
+  "channels": [
+    "yach-im-full"
+  ],
   "activation": {
     "onStartup": false,
-    "onChannels": ["yach-im-full"],
-    "onCommands": ["yach_login", "yach_status", "yach-refresh-token", "yach-response"]
+    "onChannels": [
+      "yach-im-full"
+    ],
+    "onCommands": [
+      "yach_login",
+      "yach_status",
+      "yach-refresh-token",
+      "yach-response"
+    ]
   },
   "contracts": {
     "tools": [
-      "yach_audio_to_text", "yach_get_group_unread", "yach_get_history", "yach_get_message_highlights", "yach_get_status", "yach_get_top_sessions", "yach_list_sessions", "yach_recall_message", "yach_search_messages", "yach_send_at_message", "yach_send_card", "yach_send_group_text", "yach_send_message", "yach_send_robot_message", "yach_send_vote",
-      "yach_add_group_users", "yach_change_group_owner", "yach_create_group", "yach_dismiss_group", "yach_edit_group_info", "yach_get_group_info", "yach_get_group_users", "yach_list_squads", "yach_mute_group", "yach_quit_group", "yach_remove_group_users", "yach_search_groups", "yach_set_group_admin",
-      "yach_get_org_users", "yach_get_platform_config", "yach_get_user_card", "yach_get_user_config", "yach_get_users_by_id_list", "yach_get_value_tags", "yach_get_workstate_info", "yach_get_young_new_post", "yach_list_contacts", "yach_list_depts", "yach_list_workstates", "yach_search_users", "yach_set_user_info", "yach_set_workstate",
-      "yach_create_group_announcement", "yach_delete_group_announcement", "yach_get_group_announcement_check", "yach_get_group_announcement_detail", "yach_get_group_announcements", "yach_set_group_announcement_top", "yach_update_group_announcement",
-      "yach_accept_group_apply", "yach_batch_group_apply", "yach_get_group_apply_config", "yach_get_group_apply_count", "yach_get_group_apply_list", "yach_ignore_group_apply", "yach_reject_group_apply",
-      "yach_add_external_contact", "yach_delete_external_contact", "yach_get_external_apply_status", "yach_handle_external_apply", "yach_list_external_contacts", "yach_list_my_external_apps",
-      "yach_add_session_top", "yach_get_session_top_config", "yach_get_session_top_list", "yach_remove_session_top", "yach_set_session_top_config", "yach_sort_session_top",
-      "yach_add_group_emot", "yach_get_group_emot_list", "yach_get_group_emot_one", "yach_get_avatar_info", "yach_upload_avatar", "yach_add_side_bar_nav", "yach_del_side_bar_nav", "yach_get_side_bar_conf", "yach_set_side_bar_conf",
-      "yach_add_user_to_discussion", "yach_create_discuss_group", "yach_dismiss_discuss_group", "yach_get_discuss_info", "yach_get_discuss_msg_list", "yach_join_discuss_group", "yach_set_discuss_group_title",
-      "yach_add_vote_choice", "yach_get_vote_count", "yach_get_vote_detail", "yach_intelloft_vote"
+      "yach_accept_group_apply",
+      "yach_add_collect",
+      "yach_add_external_contact",
+      "yach_add_group_emot",
+      "yach_add_group_users",
+      "yach_add_live_subtitle",
+      "yach_add_prompt",
+      "yach_add_schedule_share_ics",
+      "yach_add_session_top",
+      "yach_add_side_bar_nav",
+      "yach_add_user_to_discussion",
+      "yach_add_vote_choice",
+      "yach_ai_image_comeducation",
+      "yach_aiseek_continue",
+      "yach_aiseek_send",
+      "yach_ask_intelloft",
+      "yach_attendance_auth_check",
+      "yach_audio_to_text",
+      "yach_batch_get_file_info",
+      "yach_batch_group_apply",
+      "yach_batch_move_file",
+      "yach_book_meeting_room",
+      "yach_cancel_meeting_room",
+      "yach_cancel_schedule_share",
+      "yach_cancel_weekly_zan",
+      "yach_change_group_owner",
+      "yach_change_intelloft_option",
+      "yach_check_file_expire",
+      "yach_check_robot_name",
+      "yach_check_schedule_conflict",
+      "yach_check_url_safety",
+      "yach_check_weekly_authority",
+      "yach_comment_weekly",
+      "yach_confirm_remind",
+      "yach_continue_intelloft_chat",
+      "yach_convert_intelloft_file",
+      "yach_create_agent_robot",
+      "yach_create_client_document",
+      "yach_create_discuss_group",
+      "yach_create_folder",
+      "yach_create_group",
+      "yach_create_group_announcement",
+      "yach_create_intelloft_agent_skill",
+      "yach_create_intelloft_session",
+      "yach_create_schedule",
+      "yach_del_collect",
+      "yach_del_prompt",
+      "yach_del_side_bar_nav",
+      "yach_delete_agent_robot",
+      "yach_delete_external_contact",
+      "yach_delete_file",
+      "yach_delete_group_announcement",
+      "yach_delete_intelloft_agent_skill",
+      "yach_delete_intelloft_session",
+      "yach_delete_recycle_bin_file",
+      "yach_delete_schedule",
+      "yach_delete_schedule_share_ics",
+      "yach_delete_shorthand",
+      "yach_delete_timezone",
+      "yach_delete_user_db_upload",
+      "yach_delete_weekly_comment",
+      "yach_dismiss_discuss_group",
+      "yach_dismiss_group",
+      "yach_edit_group_info",
+      "yach_edit_prompt",
+      "yach_edit_schedule_share_ics",
+      "yach_feedback_intelloft_message",
+      "yach_feedback_sdk_create",
+      "yach_fetch_link_preview",
+      "yach_follow_user_weekly",
+      "yach_get_app_push_state",
+      "yach_get_attendance_info",
+      "yach_get_avatar_info",
+      "yach_get_discuss_info",
+      "yach_get_discuss_msg_list",
+      "yach_get_downvote_tags",
+      "yach_get_external_apply_status",
+      "yach_get_file_info",
+      "yach_get_group_announcement_check",
+      "yach_get_group_announcement_detail",
+      "yach_get_group_announcements",
+      "yach_get_group_apply_config",
+      "yach_get_group_apply_count",
+      "yach_get_group_apply_list",
+      "yach_get_group_emot_list",
+      "yach_get_group_emot_one",
+      "yach_get_group_info",
+      "yach_get_group_unread",
+      "yach_get_group_users",
+      "yach_get_history",
+      "yach_get_intelloft_agent_skill",
+      "yach_get_intelloft_session",
+      "yach_get_intelloft_skill_detail",
+      "yach_get_intelloft_tmp_download_url",
+      "yach_get_intelloft_url_info",
+      "yach_get_intelloft_user_guide",
+      "yach_get_last_sent_weekly",
+      "yach_get_meeting_room_entry",
+      "yach_get_message_highlights",
+      "yach_get_notice_list",
+      "yach_get_oapi_detail",
+      "yach_get_okr_detail",
+      "yach_get_org_users",
+      "yach_get_payroll",
+      "yach_get_payroll_history",
+      "yach_get_platform_config",
+      "yach_get_prompt_bar",
+      "yach_get_prompt_detail",
+      "yach_get_recycle_bin_list",
+      "yach_get_remind_quota",
+      "yach_get_schedule_detail",
+      "yach_get_schedule_share_ics_list",
+      "yach_get_schedule_subscription_settings",
+      "yach_get_schedule_subscription_subscribers",
+      "yach_get_sensitive_words_config",
+      "yach_get_session_top_config",
+      "yach_get_session_top_list",
+      "yach_get_share_to_me_shorthand_list",
+      "yach_get_shorthand_detail",
+      "yach_get_shorthand_list",
+      "yach_get_side_bar_conf",
+      "yach_get_status",
+      "yach_get_support_timezone_list",
+      "yach_get_tencent_meeting_info",
+      "yach_get_tencent_meeting_list",
+      "yach_get_tencent_meeting_summary",
+      "yach_get_tencent_record_info",
+      "yach_get_timezone_list",
+      "yach_get_top_sessions",
+      "yach_get_user_card",
+      "yach_get_user_config",
+      "yach_get_users_by_id_list",
+      "yach_get_value_tags",
+      "yach_get_vote_count",
+      "yach_get_vote_detail",
+      "yach_get_weekly_comments",
+      "yach_get_weekly_detail",
+      "yach_get_weekly_draft",
+      "yach_get_weekly_readers",
+      "yach_get_weekly_time",
+      "yach_get_weekly_zan_list",
+      "yach_get_weekly_zan_read_batch",
+      "yach_get_workstate_info",
+      "yach_get_young_new_post",
+      "yach_global_search",
+      "yach_handle_external_apply",
+      "yach_ignore_group_apply",
+      "yach_install_intelloft_agent_skill",
+      "yach_intelloft_convert_progress",
+      "yach_intelloft_image_ocr",
+      "yach_intelloft_vote",
+      "yach_join_discuss_group",
+      "yach_link_msg_abstract",
+      "yach_list_ai_robots",
+      "yach_list_aide_bots",
+      "yach_list_contacts",
+      "yach_list_depts",
+      "yach_list_external_contacts",
+      "yach_list_intelloft_agent_skill_categories",
+      "yach_list_intelloft_agent_skills",
+      "yach_list_intelloft_digital_partners",
+      "yach_list_intelloft_feedback_tags",
+      "yach_list_intelloft_helpwrite_tags",
+      "yach_list_intelloft_messages",
+      "yach_list_intelloft_options",
+      "yach_list_intelloft_quick_agent_skills",
+      "yach_list_intelloft_sessions",
+      "yach_list_intelloft_skills",
+      "yach_list_intelloft_version_history",
+      "yach_list_lives",
+      "yach_list_lore_spaces",
+      "yach_list_mail_folders",
+      "yach_list_mail_messages",
+      "yach_list_my_external_apps",
+      "yach_list_my_okrs",
+      "yach_list_okr_templates",
+      "yach_list_prompts",
+      "yach_list_received_weekly",
+      "yach_list_reminders",
+      "yach_list_report_category",
+      "yach_list_report_employees",
+      "yach_list_schedules",
+      "yach_list_sessions",
+      "yach_list_squads",
+      "yach_list_star_weekly",
+      "yach_list_unread_weekly",
+      "yach_list_weekly",
+      "yach_list_weekly_events",
+      "yach_list_weekly_templates",
+      "yach_list_weekly_weeks",
+      "yach_list_workbench_apps",
+      "yach_list_workstates",
+      "yach_lore_node_add",
+      "yach_lore_node_collaborators_add",
+      "yach_lore_node_collaborators_del",
+      "yach_lore_node_collaborators_edit",
+      "yach_lore_node_collaborators_list",
+      "yach_lore_node_delete",
+      "yach_lore_node_drag",
+      "yach_lore_node_info",
+      "yach_lore_node_rename",
+      "yach_lore_node_security_list",
+      "yach_lore_node_share_get_conf",
+      "yach_lore_node_share_get_content_conf",
+      "yach_lore_node_share_set_content_conf",
+      "yach_lore_read_doc",
+      "yach_lore_sidenodes",
+      "yach_lore_space_auth_add",
+      "yach_lore_space_auth_del",
+      "yach_lore_space_auth_edit",
+      "yach_lore_space_auth_list",
+      "yach_lore_upload_file",
+      "yach_lore_write_doc",
+      "yach_mark_weekly_read",
+      "yach_meeting_room_bookings",
+      "yach_mute_group",
+      "yach_oapi_message_single_send",
+      "yach_oapi_robots_list",
+      "yach_prepare_weekly_send",
+      "yach_preview_file",
+      "yach_punch_off_duty",
+      "yach_punch_on_duty",
+      "yach_query_sensitive_msgs",
+      "yach_quit_group",
+      "yach_read_intelloft_notification",
+      "yach_read_mail_message",
+      "yach_recall_mail",
+      "yach_recall_message",
+      "yach_recall_remind",
+      "yach_recommend_freetime",
+      "yach_refresh_payroll_token",
+      "yach_refresh_tencent_token",
+      "yach_regenerate_intelloft_message",
+      "yach_reject_group_apply",
+      "yach_remove_group_users",
+      "yach_remove_session_top",
+      "yach_rename_file",
+      "yach_rename_intelloft_session",
+      "yach_respond_to_schedule",
+      "yach_save_timezone",
+      "yach_save_to_recycle_bin",
+      "yach_save_weekly_draft",
+      "yach_search_ai_robots_by_name",
+      "yach_search_assistant_history",
+      "yach_search_groups",
+      "yach_search_intelloft_agent_skills",
+      "yach_search_intelloft_group_users",
+      "yach_search_meeting_rooms",
+      "yach_search_messages",
+      "yach_search_user_weekly",
+      "yach_search_users",
+      "yach_send_at_message",
+      "yach_send_card",
+      "yach_send_group_text",
+      "yach_send_intelloft_group_summary",
+      "yach_send_mail",
+      "yach_send_message",
+      "yach_send_remind",
+      "yach_send_robot_message",
+      "yach_send_vote",
+      "yach_set_app_push",
+      "yach_set_collection_remind",
+      "yach_set_discuss_group_title",
+      "yach_set_group_admin",
+      "yach_set_group_announcement_top",
+      "yach_set_session_top_config",
+      "yach_set_side_bar_conf",
+      "yach_set_user_info",
+      "yach_set_workstate",
+      "yach_share_file",
+      "yach_share_intelloft_agent_skill",
+      "yach_short_link_trans_long",
+      "yach_sort_session_top",
+      "yach_stop_intelloft_message",
+      "yach_submit_weekly",
+      "yach_sync_schedule_share_ics",
+      "yach_top_intelloft_session",
+      "yach_unfollow_user_weekly",
+      "yach_update_group_announcement",
+      "yach_update_intelloft_agent_skill",
+      "yach_update_schedule",
+      "yach_update_shorthand",
+      "yach_upload_avatar",
+      "yach_upload_file",
+      "yach_upload_shorthand",
+      "yach_use_intelloft_agent_skill",
+      "yach_zan_weekly"
     ]
   },
   "toolMetadata": {
-    "yach_send_message": { "optional": true, "sideEffecting": true },
-    "yach_send_group_text": { "optional": true, "sideEffecting": true },
-    "yach_send_card": { "optional": true, "sideEffecting": true },
-    "yach_send_vote": { "optional": true, "sideEffecting": true },
-    "yach_send_at_message": { "optional": true, "sideEffecting": true },
-    "yach_recall_message": { "optional": true, "sideEffecting": true },
-    "yach_send_robot_message": { "optional": true, "sideEffecting": true },
-    "yach_add_group_users": { "optional": true, "sideEffecting": true },
-    "yach_change_group_owner": { "optional": true, "sideEffecting": true },
-    "yach_create_group": { "optional": true, "sideEffecting": true },
-    "yach_dismiss_group": { "optional": true, "sideEffecting": true },
-    "yach_edit_group_info": { "optional": true, "sideEffecting": true },
-    "yach_mute_group": { "optional": true, "sideEffecting": true },
-    "yach_quit_group": { "optional": true, "sideEffecting": true },
-    "yach_remove_group_users": { "optional": true, "sideEffecting": true },
-    "yach_set_group_admin": { "optional": true, "sideEffecting": true },
-    "yach_set_user_info": { "optional": true, "sideEffecting": true },
-    "yach_set_workstate": { "optional": true, "sideEffecting": true },
-    "yach_create_group_announcement": { "optional": true, "sideEffecting": true },
-    "yach_delete_group_announcement": { "optional": true, "sideEffecting": true },
-    "yach_set_group_announcement_top": { "optional": true, "sideEffecting": true },
-    "yach_update_group_announcement": { "optional": true, "sideEffecting": true },
-    "yach_accept_group_apply": { "optional": true, "sideEffecting": true },
-    "yach_batch_group_apply": { "optional": true, "sideEffecting": true },
-    "yach_ignore_group_apply": { "optional": true, "sideEffecting": true },
-    "yach_reject_group_apply": { "optional": true, "sideEffecting": true },
-    "yach_add_external_contact": { "optional": true, "sideEffecting": true },
-    "yach_delete_external_contact": { "optional": true, "sideEffecting": true },
-    "yach_handle_external_apply": { "optional": true, "sideEffecting": true },
-    "yach_add_session_top": { "optional": true, "sideEffecting": true },
-    "yach_remove_session_top": { "optional": true, "sideEffecting": true },
-    "yach_set_session_top_config": { "optional": true, "sideEffecting": true },
-    "yach_sort_session_top": { "optional": true, "sideEffecting": true },
-    "yach_add_group_emot": { "optional": true, "sideEffecting": true },
-    "yach_upload_avatar": { "optional": true, "sideEffecting": true },
-    "yach_set_side_bar_conf": { "optional": true, "sideEffecting": true },
-    "yach_add_side_bar_nav": { "optional": true, "sideEffecting": true },
-    "yach_del_side_bar_nav": { "optional": true, "sideEffecting": true },
-    "yach_create_discuss_group": { "optional": true, "sideEffecting": true },
-    "yach_dismiss_discuss_group": { "optional": true, "sideEffecting": true },
-    "yach_join_discuss_group": { "optional": true, "sideEffecting": true },
-    "yach_set_discuss_group_title": { "optional": true, "sideEffecting": true },
-    "yach_add_user_to_discussion": { "optional": true, "sideEffecting": true },
-    "yach_add_vote_choice": { "optional": true, "sideEffecting": true },
-    "yach_intelloft_vote": { "optional": true, "sideEffecting": true },
-    "yach_get_history": { "optional": true },
-    "yach_search_messages": { "optional": true },
-    "yach_get_message_highlights": { "optional": true },
-    "yach_get_group_unread": { "optional": true },
-    "yach_search_users": { "optional": true },
-    "yach_get_user_card": { "optional": true },
-    "yach_list_depts": { "optional": true },
-    "yach_get_org_users": { "optional": true },
-    "yach_get_users_by_id_list": { "optional": true },
-    "yach_get_platform_config": { "optional": true },
-    "yach_get_user_config": { "optional": true },
-    "yach_list_contacts": { "optional": true },
-    "yach_get_workstate_info": { "optional": true },
-    "yach_get_group_users": { "optional": true },
-    "yach_get_group_info": { "optional": true },
-    "yach_list_squads": { "optional": true },
-    "yach_get_group_announcements": { "optional": true },
-    "yach_get_group_announcement_detail": { "optional": true },
-    "yach_get_group_announcement_check": { "optional": true },
-    "yach_get_group_apply_list": { "optional": true },
-    "yach_get_group_apply_count": { "optional": true },
-    "yach_get_group_apply_config": { "optional": true },
-    "yach_get_external_apply_status": { "optional": true },
-    "yach_list_my_external_apps": { "optional": true },
-    "yach_list_external_contacts": { "optional": true },
-    "yach_list_sessions": { "optional": true },
-    "yach_get_top_sessions": { "optional": true },
-    "yach_get_session_top_list": { "optional": true },
-    "yach_get_session_top_config": { "optional": true },
-    "yach_get_group_emot_list": { "optional": true },
-    "yach_get_group_emot_one": { "optional": true },
-    "yach_get_avatar_info": { "optional": true },
-    "yach_get_side_bar_conf": { "optional": true },
-    "yach_get_discuss_info": { "optional": true },
-    "yach_get_discuss_msg_list": { "optional": true },
-    "yach_get_vote_detail": { "optional": true },
-    "yach_get_vote_count": { "optional": true }
+    "yach_accept_group_apply": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_collect": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_external_contact": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_group_emot": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_group_users": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_live_subtitle": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_prompt": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_schedule_share_ics": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_session_top": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_side_bar_nav": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_user_to_discussion": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_add_vote_choice": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_ai_image_comeducation": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_aiseek_continue": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_aiseek_send": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_ask_intelloft": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_attendance_auth_check": {
+      "optional": true
+    },
+    "yach_audio_to_text": {
+      "optional": true
+    },
+    "yach_batch_get_file_info": {
+      "optional": true
+    },
+    "yach_batch_group_apply": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_batch_move_file": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_book_meeting_room": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_cancel_meeting_room": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_cancel_schedule_share": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_cancel_weekly_zan": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_change_group_owner": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_change_intelloft_option": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_check_file_expire": {
+      "optional": true
+    },
+    "yach_check_robot_name": {
+      "optional": true
+    },
+    "yach_check_schedule_conflict": {
+      "optional": true
+    },
+    "yach_check_url_safety": {
+      "optional": true
+    },
+    "yach_check_weekly_authority": {
+      "optional": true
+    },
+    "yach_comment_weekly": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_confirm_remind": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_continue_intelloft_chat": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_convert_intelloft_file": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_create_agent_robot": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_create_client_document": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_create_discuss_group": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_create_folder": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_create_group": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_create_group_announcement": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_create_intelloft_agent_skill": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_create_intelloft_session": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_create_schedule": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_del_collect": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_del_prompt": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_del_side_bar_nav": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_agent_robot": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_external_contact": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_file": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_group_announcement": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_intelloft_agent_skill": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_intelloft_session": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_recycle_bin_file": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_schedule": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_schedule_share_ics": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_shorthand": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_timezone": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_user_db_upload": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_delete_weekly_comment": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_dismiss_discuss_group": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_dismiss_group": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_edit_group_info": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_edit_prompt": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_edit_schedule_share_ics": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_feedback_intelloft_message": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_feedback_sdk_create": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_fetch_link_preview": {
+      "optional": true
+    },
+    "yach_follow_user_weekly": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_get_app_push_state": {
+      "optional": true
+    },
+    "yach_get_attendance_info": {
+      "optional": true
+    },
+    "yach_get_avatar_info": {
+      "optional": true
+    },
+    "yach_get_discuss_info": {
+      "optional": true
+    },
+    "yach_get_discuss_msg_list": {
+      "optional": true
+    },
+    "yach_get_downvote_tags": {
+      "optional": true
+    },
+    "yach_get_external_apply_status": {
+      "optional": true
+    },
+    "yach_get_file_info": {
+      "optional": true
+    },
+    "yach_get_group_announcement_check": {
+      "optional": true
+    },
+    "yach_get_group_announcement_detail": {
+      "optional": true
+    },
+    "yach_get_group_announcements": {
+      "optional": true
+    },
+    "yach_get_group_apply_config": {
+      "optional": true
+    },
+    "yach_get_group_apply_count": {
+      "optional": true
+    },
+    "yach_get_group_apply_list": {
+      "optional": true
+    },
+    "yach_get_group_emot_list": {
+      "optional": true
+    },
+    "yach_get_group_emot_one": {
+      "optional": true
+    },
+    "yach_get_group_info": {
+      "optional": true
+    },
+    "yach_get_group_unread": {
+      "optional": true
+    },
+    "yach_get_group_users": {
+      "optional": true
+    },
+    "yach_get_history": {
+      "optional": true
+    },
+    "yach_get_intelloft_agent_skill": {
+      "optional": true
+    },
+    "yach_get_intelloft_session": {
+      "optional": true
+    },
+    "yach_get_intelloft_skill_detail": {
+      "optional": true
+    },
+    "yach_get_intelloft_tmp_download_url": {
+      "optional": true
+    },
+    "yach_get_intelloft_url_info": {
+      "optional": true
+    },
+    "yach_get_intelloft_user_guide": {
+      "optional": true
+    },
+    "yach_get_last_sent_weekly": {
+      "optional": true
+    },
+    "yach_get_meeting_room_entry": {
+      "optional": true
+    },
+    "yach_get_message_highlights": {
+      "optional": true
+    },
+    "yach_get_notice_list": {
+      "optional": true
+    },
+    "yach_get_oapi_detail": {
+      "optional": true
+    },
+    "yach_get_okr_detail": {
+      "optional": true
+    },
+    "yach_get_org_users": {
+      "optional": true
+    },
+    "yach_get_payroll": {
+      "optional": true
+    },
+    "yach_get_payroll_history": {
+      "optional": true
+    },
+    "yach_get_platform_config": {
+      "optional": true
+    },
+    "yach_get_prompt_bar": {
+      "optional": true
+    },
+    "yach_get_prompt_detail": {
+      "optional": true
+    },
+    "yach_get_recycle_bin_list": {
+      "optional": true
+    },
+    "yach_get_remind_quota": {
+      "optional": true
+    },
+    "yach_get_schedule_detail": {
+      "optional": true
+    },
+    "yach_get_schedule_share_ics_list": {
+      "optional": true
+    },
+    "yach_get_schedule_subscription_settings": {
+      "optional": true
+    },
+    "yach_get_schedule_subscription_subscribers": {
+      "optional": true
+    },
+    "yach_get_sensitive_words_config": {
+      "optional": true
+    },
+    "yach_get_session_top_config": {
+      "optional": true
+    },
+    "yach_get_session_top_list": {
+      "optional": true
+    },
+    "yach_get_share_to_me_shorthand_list": {
+      "optional": true
+    },
+    "yach_get_shorthand_detail": {
+      "optional": true
+    },
+    "yach_get_shorthand_list": {
+      "optional": true
+    },
+    "yach_get_side_bar_conf": {
+      "optional": true
+    },
+    "yach_get_status": {
+      "optional": true
+    },
+    "yach_get_support_timezone_list": {
+      "optional": true
+    },
+    "yach_get_tencent_meeting_info": {
+      "optional": true
+    },
+    "yach_get_tencent_meeting_list": {
+      "optional": true
+    },
+    "yach_get_tencent_meeting_summary": {
+      "optional": true
+    },
+    "yach_get_tencent_record_info": {
+      "optional": true
+    },
+    "yach_get_timezone_list": {
+      "optional": true
+    },
+    "yach_get_top_sessions": {
+      "optional": true
+    },
+    "yach_get_user_card": {
+      "optional": true
+    },
+    "yach_get_user_config": {
+      "optional": true
+    },
+    "yach_get_users_by_id_list": {
+      "optional": true
+    },
+    "yach_get_value_tags": {
+      "optional": true
+    },
+    "yach_get_vote_count": {
+      "optional": true
+    },
+    "yach_get_vote_detail": {
+      "optional": true
+    },
+    "yach_get_weekly_comments": {
+      "optional": true
+    },
+    "yach_get_weekly_detail": {
+      "optional": true
+    },
+    "yach_get_weekly_draft": {
+      "optional": true
+    },
+    "yach_get_weekly_readers": {
+      "optional": true
+    },
+    "yach_get_weekly_time": {
+      "optional": true
+    },
+    "yach_get_weekly_zan_list": {
+      "optional": true
+    },
+    "yach_get_weekly_zan_read_batch": {
+      "optional": true
+    },
+    "yach_get_workstate_info": {
+      "optional": true
+    },
+    "yach_get_young_new_post": {
+      "optional": true
+    },
+    "yach_global_search": {
+      "optional": true
+    },
+    "yach_handle_external_apply": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_ignore_group_apply": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_install_intelloft_agent_skill": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_intelloft_convert_progress": {
+      "optional": true
+    },
+    "yach_intelloft_image_ocr": {
+      "optional": true
+    },
+    "yach_intelloft_vote": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_join_discuss_group": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_link_msg_abstract": {
+      "optional": true
+    },
+    "yach_list_ai_robots": {
+      "optional": true
+    },
+    "yach_list_aide_bots": {
+      "optional": true
+    },
+    "yach_list_contacts": {
+      "optional": true
+    },
+    "yach_list_depts": {
+      "optional": true
+    },
+    "yach_list_external_contacts": {
+      "optional": true
+    },
+    "yach_list_intelloft_agent_skill_categories": {
+      "optional": true
+    },
+    "yach_list_intelloft_agent_skills": {
+      "optional": true
+    },
+    "yach_list_intelloft_digital_partners": {
+      "optional": true
+    },
+    "yach_list_intelloft_feedback_tags": {
+      "optional": true
+    },
+    "yach_list_intelloft_helpwrite_tags": {
+      "optional": true
+    },
+    "yach_list_intelloft_messages": {
+      "optional": true
+    },
+    "yach_list_intelloft_options": {
+      "optional": true
+    },
+    "yach_list_intelloft_quick_agent_skills": {
+      "optional": true
+    },
+    "yach_list_intelloft_sessions": {
+      "optional": true
+    },
+    "yach_list_intelloft_skills": {
+      "optional": true
+    },
+    "yach_list_intelloft_version_history": {
+      "optional": true
+    },
+    "yach_list_lives": {
+      "optional": true
+    },
+    "yach_list_lore_spaces": {
+      "optional": true
+    },
+    "yach_list_mail_folders": {
+      "optional": true
+    },
+    "yach_list_mail_messages": {
+      "optional": true
+    },
+    "yach_list_my_external_apps": {
+      "optional": true
+    },
+    "yach_list_my_okrs": {
+      "optional": true
+    },
+    "yach_list_okr_templates": {
+      "optional": true
+    },
+    "yach_list_prompts": {
+      "optional": true
+    },
+    "yach_list_received_weekly": {
+      "optional": true
+    },
+    "yach_list_reminders": {
+      "optional": true
+    },
+    "yach_list_report_category": {
+      "optional": true
+    },
+    "yach_list_report_employees": {
+      "optional": true
+    },
+    "yach_list_schedules": {
+      "optional": true
+    },
+    "yach_list_sessions": {
+      "optional": true
+    },
+    "yach_list_squads": {
+      "optional": true
+    },
+    "yach_list_star_weekly": {
+      "optional": true
+    },
+    "yach_list_unread_weekly": {
+      "optional": true
+    },
+    "yach_list_weekly": {
+      "optional": true
+    },
+    "yach_list_weekly_events": {
+      "optional": true
+    },
+    "yach_list_weekly_templates": {
+      "optional": true
+    },
+    "yach_list_weekly_weeks": {
+      "optional": true
+    },
+    "yach_list_workbench_apps": {
+      "optional": true
+    },
+    "yach_list_workstates": {
+      "optional": true
+    },
+    "yach_lore_node_add": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_node_collaborators_add": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_node_collaborators_del": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_node_collaborators_edit": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_node_collaborators_list": {
+      "optional": true
+    },
+    "yach_lore_node_delete": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_node_drag": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_node_info": {
+      "optional": true
+    },
+    "yach_lore_node_rename": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_node_security_list": {
+      "optional": true
+    },
+    "yach_lore_node_share_get_conf": {
+      "optional": true
+    },
+    "yach_lore_node_share_get_content_conf": {
+      "optional": true
+    },
+    "yach_lore_node_share_set_content_conf": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_read_doc": {
+      "optional": true
+    },
+    "yach_lore_sidenodes": {
+      "optional": true
+    },
+    "yach_lore_space_auth_add": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_space_auth_del": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_space_auth_edit": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_space_auth_list": {
+      "optional": true
+    },
+    "yach_lore_upload_file": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_lore_write_doc": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_mark_weekly_read": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_meeting_room_bookings": {
+      "optional": true
+    },
+    "yach_mute_group": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_oapi_message_single_send": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_oapi_robots_list": {
+      "optional": true
+    },
+    "yach_prepare_weekly_send": {
+      "optional": true
+    },
+    "yach_preview_file": {
+      "optional": true
+    },
+    "yach_punch_off_duty": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_punch_on_duty": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_query_sensitive_msgs": {
+      "optional": true
+    },
+    "yach_quit_group": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_read_intelloft_notification": {
+      "optional": true
+    },
+    "yach_read_mail_message": {
+      "optional": true
+    },
+    "yach_recall_mail": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_recall_message": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_recall_remind": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_recommend_freetime": {
+      "optional": true
+    },
+    "yach_refresh_payroll_token": {
+      "optional": true
+    },
+    "yach_refresh_tencent_token": {
+      "optional": true
+    },
+    "yach_regenerate_intelloft_message": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_reject_group_apply": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_remove_group_users": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_remove_session_top": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_rename_file": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_rename_intelloft_session": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_respond_to_schedule": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_save_timezone": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_save_to_recycle_bin": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_save_weekly_draft": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_search_ai_robots_by_name": {
+      "optional": true
+    },
+    "yach_search_assistant_history": {
+      "optional": true
+    },
+    "yach_search_groups": {
+      "optional": true
+    },
+    "yach_search_intelloft_agent_skills": {
+      "optional": true
+    },
+    "yach_search_intelloft_group_users": {
+      "optional": true
+    },
+    "yach_search_meeting_rooms": {
+      "optional": true
+    },
+    "yach_search_messages": {
+      "optional": true
+    },
+    "yach_search_user_weekly": {
+      "optional": true
+    },
+    "yach_search_users": {
+      "optional": true
+    },
+    "yach_send_at_message": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_send_card": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_send_group_text": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_send_intelloft_group_summary": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_send_mail": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_send_message": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_send_remind": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_send_robot_message": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_send_vote": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_set_app_push": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_set_collection_remind": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_set_discuss_group_title": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_set_group_admin": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_set_group_announcement_top": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_set_session_top_config": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_set_side_bar_conf": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_set_user_info": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_set_workstate": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_share_file": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_share_intelloft_agent_skill": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_short_link_trans_long": {
+      "optional": true
+    },
+    "yach_sort_session_top": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_stop_intelloft_message": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_submit_weekly": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_sync_schedule_share_ics": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_top_intelloft_session": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_unfollow_user_weekly": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_update_group_announcement": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_update_intelloft_agent_skill": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_update_schedule": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_update_shorthand": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_upload_avatar": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_upload_file": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_upload_shorthand": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_use_intelloft_agent_skill": {
+      "optional": true,
+      "sideEffecting": true
+    },
+    "yach_zan_weekly": {
+      "optional": true,
+      "sideEffecting": true
+    }
   },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
     "properties": {
-      "sessionPath": { "type": "string", "description": "可选：yach-im-full session.json 的绝对路径" },
-      "nimEnabled": { "type": "boolean", "default": true },
-      "autoStartNim": { "type": "boolean", "default": true },
+      "sessionPath": {
+        "type": "string",
+        "description": "可选：yach-im-full session.json 的绝对路径"
+      },
+      "nimEnabled": {
+        "type": "boolean",
+        "default": true
+      },
+      "autoStartNim": {
+        "type": "boolean",
+        "default": true
+      },
       "responsePolicy": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "enabled": { "type": "boolean", "default": false },
-          "p2pAllow": { "type": "array", "items": { "type": "string" } },
-          "groupAlways": { "type": "array", "items": { "type": "string" } },
-          "groupMention": { "type": "array", "items": { "type": "string" } },
-          "agentId": { "type": "string" },
-          "model": { "type": "string" },
-          "timeoutMs": { "type": "integer", "minimum": 5000, "maximum": 120000 },
-          "maxConcurrent": { "type": "integer", "minimum": 1, "maximum": 8 },
-          "queueLimit": { "type": "integer", "minimum": 1, "maximum": 200 },
-          "maxReplyChars": { "type": "integer", "minimum": 200, "maximum": 20000 },
-          "respondToOffline": { "type": "boolean" },
-          "respondToBots": { "type": "boolean" }
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "p2pAllow": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groupAlways": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groupMention": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "agentId": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "minimum": 5000,
+            "maximum": 120000
+          },
+          "maxConcurrent": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8
+          },
+          "queueLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "maxReplyChars": {
+            "type": "integer",
+            "minimum": 200,
+            "maximum": 20000
+          },
+          "respondToOffline": {
+            "type": "boolean"
+          },
+          "respondToBots": {
+            "type": "boolean"
+          }
         }
       }
     }
@@ -142,51 +1391,257 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "enabled": { "type": "boolean" },
+          "enabled": {
+            "type": "boolean"
+          },
           "appKey": {
             "anyOf": [
-              { "type": "string" },
-              { "type": "object", "additionalProperties": false, "required": ["source", "provider", "id"], "properties": { "source": { "type": "string", "enum": ["env", "file", "exec", "store"] }, "provider": { "type": "string" }, "id": { "type": "string" } } }
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "source",
+                  "provider",
+                  "id"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "env",
+                      "file",
+                      "exec",
+                      "store"
+                    ]
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
             ]
           },
           "appSecret": {
             "anyOf": [
-              { "type": "string" },
-              { "type": "object", "additionalProperties": false, "required": ["source", "provider", "id"], "properties": { "source": { "type": "string", "enum": ["env", "file", "exec", "store"] }, "provider": { "type": "string" }, "id": { "type": "string" } } }
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "source",
+                  "provider",
+                  "id"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "env",
+                      "file",
+                      "exec",
+                      "store"
+                    ]
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
             ]
           },
-          "botId": { "type": "string" },
-          "baseUrl": { "type": "string", "format": "uri-reference" },
-          "name": { "type": "string" },
-          "channelAppId": { "type": "string" },
-          "connectionMode": { "type": "string", "enum": ["channel"] },
-          "replyMode": { "type": "string", "enum": ["stream", "direct"] },
-          "typingExpression": { "type": "string" },
-          "typingExpressions": { "type": "array", "minItems": 1, "maxItems": 13, "items": { "type": "string", "minLength": 1 } },
-          "textChunkLimit": { "type": "integer", "minimum": 1, "maximum": 10000 },
-          "chunkMode": { "type": "string", "enum": ["length", "newline"] },
-          "markdownTableMode": { "type": "string", "enum": ["code", "table"] },
-          "chatHistoryEnabled": { "type": "boolean" },
-          "chatHistoryLimit": { "type": "integer", "minimum": 0, "maximum": 100 },
-          "dmPolicy": { "type": "string", "default": "pairing", "enum": ["open", "pairing", "allowlist", "disabled"] },
-          "allowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
-          "groupPolicy": { "type": "string", "default": "allowlist", "enum": ["open", "allowlist", "disabled"] },
-          "groupAllowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
-          "groupSenderAllowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
-          "requireMention": { "type": "boolean", "default": true },
-          "allowBots": { "anyOf": [ { "type": "boolean" }, { "type": "string", "enum": ["mentions"] } ], "default": true },
-          "groupResponseMode": { "type": "string", "enum": ["all", "humans", "mentions", "paired"], "default": "mentions" },
+          "botId": {
+            "type": "string"
+          },
+          "baseUrl": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "name": {
+            "type": "string"
+          },
+          "channelAppId": {
+            "type": "string"
+          },
+          "connectionMode": {
+            "type": "string",
+            "enum": [
+              "channel"
+            ]
+          },
+          "replyMode": {
+            "type": "string",
+            "enum": [
+              "stream",
+              "direct"
+            ]
+          },
+          "typingExpression": {
+            "type": "string"
+          },
+          "typingExpressions": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 13,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "textChunkLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "chunkMode": {
+            "type": "string",
+            "enum": [
+              "length",
+              "newline"
+            ]
+          },
+          "markdownTableMode": {
+            "type": "string",
+            "enum": [
+              "code",
+              "table"
+            ]
+          },
+          "chatHistoryEnabled": {
+            "type": "boolean"
+          },
+          "chatHistoryLimit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "dmPolicy": {
+            "type": "string",
+            "default": "pairing",
+            "enum": [
+              "open",
+              "pairing",
+              "allowlist",
+              "disabled"
+            ]
+          },
+          "allowFrom": {
+            "type": "array",
+            "items": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "groupPolicy": {
+            "type": "string",
+            "default": "allowlist",
+            "enum": [
+              "open",
+              "allowlist",
+              "disabled"
+            ]
+          },
+          "groupAllowFrom": {
+            "type": "array",
+            "items": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "groupSenderAllowFrom": {
+            "type": "array",
+            "items": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "requireMention": {
+            "type": "boolean",
+            "default": true
+          },
+          "allowBots": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mentions"
+                ]
+              }
+            ],
+            "default": true
+          },
+          "groupResponseMode": {
+            "type": "string",
+            "enum": [
+              "all",
+              "humans",
+              "mentions",
+              "paired"
+            ],
+            "default": "mentions"
+          },
           "groups": {
             "type": "object",
             "additionalProperties": {
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "enabled": { "type": "boolean" },
-                "requireMention": { "type": "boolean" },
-                "allowBots": { "anyOf": [ { "type": "boolean" }, { "type": "string", "enum": ["mentions"] } ] },
-                "groupResponseMode": { "type": "string", "enum": ["all", "humans", "mentions", "paired"] },
-                "allowFrom": { "type": "array", "items": { "type": ["string", "number"] } }
+                "enabled": {
+                  "type": "boolean"
+                },
+                "requireMention": {
+                  "type": "boolean"
+                },
+                "allowBots": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "mentions"
+                      ]
+                    }
+                  ]
+                },
+                "groupResponseMode": {
+                  "type": "string",
+                  "enum": [
+                    "all",
+                    "humans",
+                    "mentions",
+                    "paired"
+                  ]
+                },
+                "allowFrom": {
+                  "type": "array",
+                  "items": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  }
+                }
               }
             }
           },
@@ -194,10 +1649,24 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "enabled": { "type": "boolean" },
-              "maxEventsPerWindow": { "type": "integer", "minimum": 1, "maximum": 1000 },
-              "windowSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
-              "cooldownSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
+              "enabled": {
+                "type": "boolean"
+              },
+              "maxEventsPerWindow": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000
+              },
+              "windowSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 86400
+              },
+              "cooldownSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 86400
+              }
             }
           },
           "accounts": {
@@ -206,32 +1675,255 @@
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "enabled": { "type": "boolean" },
-                "appKey": { "anyOf": [ { "type": "string" }, { "type": "object", "additionalProperties": false, "required": ["source", "provider", "id"], "properties": { "source": { "type": "string", "enum": ["env", "file", "exec", "store"] }, "provider": { "type": "string" }, "id": { "type": "string" } } } ] },
-                "appSecret": { "anyOf": [ { "type": "string" }, { "type": "object", "additionalProperties": false, "required": ["source", "provider", "id"], "properties": { "source": { "type": "string", "enum": ["env", "file", "exec", "store"] }, "provider": { "type": "string" }, "id": { "type": "string" } } } ] },
-                "botId": { "type": "string" },
-                "baseUrl": { "type": "string", "format": "uri-reference" }, "name": { "type": "string" }, "channelAppId": { "type": "string" },
-                "connectionMode": { "type": "string", "enum": ["channel"] }, "replyMode": { "type": "string", "enum": ["stream", "direct"] },
-                "typingExpression": { "type": "string" }, "typingExpressions": { "type": "array", "minItems": 1, "maxItems": 13, "items": { "type": "string", "minLength": 1 } }, "textChunkLimit": { "type": "integer", "minimum": 1, "maximum": 10000 },
-                "chunkMode": { "type": "string", "enum": ["length", "newline"] }, "markdownTableMode": { "type": "string", "enum": ["code", "table"] },
-                "chatHistoryEnabled": { "type": "boolean" }, "chatHistoryLimit": { "type": "integer", "minimum": 0, "maximum": 100 },
-                "dmPolicy": { "type": "string", "enum": ["open", "pairing", "allowlist", "disabled"] }, "allowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
-                "groupPolicy": { "type": "string", "enum": ["open", "allowlist", "disabled"] }, "groupAllowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
-                "groupSenderAllowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
-                "requireMention": { "type": "boolean", "default": true },
-                "allowBots": { "anyOf": [ { "type": "boolean" }, { "type": "string", "enum": ["mentions"] } ], "default": true },
-                "groupResponseMode": { "type": "string", "enum": ["all", "humans", "mentions", "paired"], "default": "mentions" },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "appKey": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
+                      "properties": {
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "env",
+                            "file",
+                            "exec",
+                            "store"
+                          ]
+                        },
+                        "provider": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "appSecret": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "source",
+                        "provider",
+                        "id"
+                      ],
+                      "properties": {
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "env",
+                            "file",
+                            "exec",
+                            "store"
+                          ]
+                        },
+                        "provider": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "botId": {
+                  "type": "string"
+                },
+                "baseUrl": {
+                  "type": "string",
+                  "format": "uri-reference"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "channelAppId": {
+                  "type": "string"
+                },
+                "connectionMode": {
+                  "type": "string",
+                  "enum": [
+                    "channel"
+                  ]
+                },
+                "replyMode": {
+                  "type": "string",
+                  "enum": [
+                    "stream",
+                    "direct"
+                  ]
+                },
+                "typingExpression": {
+                  "type": "string"
+                },
+                "typingExpressions": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 13,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "textChunkLimit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000
+                },
+                "chunkMode": {
+                  "type": "string",
+                  "enum": [
+                    "length",
+                    "newline"
+                  ]
+                },
+                "markdownTableMode": {
+                  "type": "string",
+                  "enum": [
+                    "code",
+                    "table"
+                  ]
+                },
+                "chatHistoryEnabled": {
+                  "type": "boolean"
+                },
+                "chatHistoryLimit": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dmPolicy": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "pairing",
+                    "allowlist",
+                    "disabled"
+                  ]
+                },
+                "allowFrom": {
+                  "type": "array",
+                  "items": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  }
+                },
+                "groupPolicy": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "allowlist",
+                    "disabled"
+                  ]
+                },
+                "groupAllowFrom": {
+                  "type": "array",
+                  "items": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  }
+                },
+                "groupSenderAllowFrom": {
+                  "type": "array",
+                  "items": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  }
+                },
+                "requireMention": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "allowBots": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "mentions"
+                      ]
+                    }
+                  ],
+                  "default": true
+                },
+                "groupResponseMode": {
+                  "type": "string",
+                  "enum": [
+                    "all",
+                    "humans",
+                    "mentions",
+                    "paired"
+                  ],
+                  "default": "mentions"
+                },
                 "groups": {
                   "type": "object",
                   "additionalProperties": {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                      "enabled": { "type": "boolean" },
-                      "requireMention": { "type": "boolean" },
-                      "allowBots": { "anyOf": [ { "type": "boolean" }, { "type": "string", "enum": ["mentions"] } ] },
-                      "groupResponseMode": { "type": "string", "enum": ["all", "humans", "mentions", "paired"] },
-                      "allowFrom": { "type": "array", "items": { "type": ["string", "number"] } }
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "requireMention": {
+                        "type": "boolean"
+                      },
+                      "allowBots": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "mentions"
+                            ]
+                          }
+                        ]
+                      },
+                      "groupResponseMode": {
+                        "type": "string",
+                        "enum": [
+                          "all",
+                          "humans",
+                          "mentions",
+                          "paired"
+                        ]
+                      },
+                      "allowFrom": {
+                        "type": "array",
+                        "items": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      }
                     }
                   }
                 },
@@ -239,10 +1931,24 @@
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "enabled": { "type": "boolean" },
-                    "maxEventsPerWindow": { "type": "integer", "minimum": 1, "maximum": 1000 },
-                    "windowSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
-                    "cooldownSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "maxEventsPerWindow": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000
+                    },
+                    "windowSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 86400
+                    },
+                    "cooldownSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 86400
+                    }
                   }
                 }
               }
@@ -253,9 +1959,21 @@
     }
   },
   "commandAliases": [
-    { "name": "yach_login", "kind": "runtime-slash" },
-    { "name": "yach_status", "kind": "runtime-slash" },
-    { "name": "yach-refresh-token", "kind": "runtime-slash" },
-    { "name": "yach-response", "kind": "runtime-slash" }
+    {
+      "name": "yach_login",
+      "kind": "runtime-slash"
+    },
+    {
+      "name": "yach_status",
+      "kind": "runtime-slash"
+    },
+    {
+      "name": "yach-refresh-token",
+      "kind": "runtime-slash"
+    },
+    {
+      "name": "yach-response",
+      "kind": "runtime-slash"
+    }
   ]
 }

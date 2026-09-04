@@ -29,7 +29,7 @@ test("tool-discovery registers tools only and never starts NIM or Gateway routes
     registerHttpRoute() { calls.routes += 1; },
     on() { calls.hooks += 1; },
   });
-  assert.equal(calls.tools.length, 88);
+  assert.equal(calls.tools.length, 287);
   assert.equal(calls.services, 0);
   assert.equal(calls.commands, 0);
   assert.equal(calls.routes, 0);
@@ -50,7 +50,7 @@ test("full runtime asks for approval before Yach external side effects", async (
     on(event, handler) { hooks.push({ event, handler }); },
   });
   assert.deepEqual(calls.services, ["yach-im-full-nim"]);
-  assert.equal(calls.tools.length, 88);
+  assert.equal(calls.tools.length, 287);
   const beforeToolCall = hooks.find((entry) => entry.event === "before_tool_call")?.handler;
   assert.equal(typeof beforeToolCall, "function");
   assert.ok((await beforeToolCall({ toolName: "yach_send_message", params: {} }))?.requireApproval);
