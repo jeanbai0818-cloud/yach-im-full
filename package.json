@@ -1,0 +1,132 @@
+{
+  "name": "@tal/yach-im-full",
+  "version": "2026.9.4-5",
+  "description": "OpenClaw Yach IM (知音楼) channel with QR login and NIM long connection",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "src",
+    "dist",
+    "openclaw.plugin.json",
+    "README.md",
+    "docs",
+    "package.json",
+    "package-lock.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && npm run check",
+    "check": "tsc -p tsconfig.json --noEmit && find dist -type f \\( -name '*.js' -o -name '*.cjs' \\) -print0 | xargs -0 -n1 node --check",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "npm run check && node --test test/**/*.test.mjs",
+    "pack:check": "npm run check && npm pack --dry-run"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.8.2"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=22.22.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "openclaw": "2026.8.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@yxim/nim-web-sdk": "^9.21.14",
+    "cos-nodejs-sdk-v5": "^2.15.4",
+    "jsdom": "^29.1.1",
+    "node-fetch": "^2.7.0",
+    "qrcode": "^1.5.4",
+    "typebox": "^1.3.6",
+    "ws": "^8.19.0",
+    "xmlhttprequest-ssl": "^4.0.0"
+  },
+  "openclaw": {
+    "extensions": ["./src/index.ts"],
+    "runtimeExtensions": ["./dist/index.js"],
+    "setupEntry": "./src/setup-entry.ts",
+    "runtimeSetupEntry": "./dist/setup-entry.js",
+    "channel": {
+      "id": "yach-im-full",
+      "label": "Yach IM Full",
+      "selectionLabel": "Yach IM Full (知音楼)",
+      "aliases": ["zhiyinlou"],
+      "docsPath": "/channels/yach-im-full",
+      "blurb": "知音楼企业 IM，Channel SDK 机器人通道 + NIM 登录长连接。",
+      "order": 80,
+      "setup": {
+        "fields": [
+          {
+            "key": "appKey",
+            "kind": "string",
+            "sensitive": true,
+            "cli": {
+              "flags": "--app-key <appKey>",
+              "description": "Yach IM appKey"
+            }
+          },
+          {
+            "key": "appSecret",
+            "kind": "string",
+            "sensitive": true,
+            "cli": {
+              "flags": "--app-secret <appSecret>",
+              "description": "Yach IM appSecret"
+            }
+          },
+          {
+            "key": "botId",
+            "kind": "string",
+            "cli": {
+              "flags": "--bot-id <botId>",
+              "description": "Optional Yach IM botId"
+            }
+          },
+          {
+            "key": "groupResponseMode",
+            "kind": "choice",
+            "choices": ["all", "humans", "mentions", "paired"],
+            "cli": {
+              "flags": "--group-response-mode <mode>",
+              "description": "Yach IM group response mode"
+            }
+          },
+          {
+            "key": "useEnv",
+            "kind": "boolean",
+            "cli": {
+              "flags": "--use-env",
+              "description": "Use YACH_IM_APP_KEY and YACH_IM_APP_SECRET"
+            },
+            "envVars": ["YACH_IM_APP_KEY", "YACH_IM_APP_SECRET"],
+            "envVarMode": "all"
+          }
+        ]
+      }
+    },
+    "install": {
+      "localPath": ".",
+      "clawhubSpec": "@tal/yach-im-full",
+      "npmSpec": "@tal/yach-im-full",
+      "defaultChoice": "clawhub",
+      "minHostVersion": ">=2026.8.2",
+      "allowInvalidConfigRecovery": true
+    },
+    "compat": {
+      "pluginApi": ">=2026.8.2",
+      "minGatewayVersion": "2026.8.2"
+    },
+    "build": {
+      "openclawVersion": "2026.8.2",
+      "pluginSdkVersion": "2026.8.2"
+    }
+  }
+}

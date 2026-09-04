@@ -1,0 +1,24 @@
+# Local dependencies and generated release artifacts
+node_modules/
+*.tgz
+*.zip
+reports/
+.DS_Store
+
+# Runtime credentials and local configuration
+.env
+.env.*
+*.session.json
+session.json
+sessions/
+
+# Private operational handoff and live-environment test runners
+Agent.md
+test/local-token-check.mjs
+test/authorized-write-smoke.mjs
+test/channel-oapi-self-smoke.mjs
+test/nim-authorized-full-smoke.mjs
+test/nim-cleanup-group.mjs
+test/nim-native-group-smoke.mjs
+test/remote-*.mjs
+test/remote-*.sh

@@ -1,0 +1,261 @@
+{
+  "id": "yach-im-full",
+  "name": "Yach IM Full",
+  "description": "知音楼企业 IM 聊天通道，支持扫码登录和 NIM 长连接",
+  "version": "2026.9.4-5",
+  "channels": ["yach-im-full"],
+  "activation": {
+    "onStartup": false,
+    "onChannels": ["yach-im-full"],
+    "onCommands": ["yach_login", "yach_status", "yach-refresh-token", "yach-response"]
+  },
+  "contracts": {
+    "tools": [
+      "yach_audio_to_text", "yach_get_group_unread", "yach_get_history", "yach_get_message_highlights", "yach_get_status", "yach_get_top_sessions", "yach_list_sessions", "yach_recall_message", "yach_search_messages", "yach_send_at_message", "yach_send_card", "yach_send_group_text", "yach_send_message", "yach_send_robot_message", "yach_send_vote",
+      "yach_add_group_users", "yach_change_group_owner", "yach_create_group", "yach_dismiss_group", "yach_edit_group_info", "yach_get_group_info", "yach_get_group_users", "yach_list_squads", "yach_mute_group", "yach_quit_group", "yach_remove_group_users", "yach_search_groups", "yach_set_group_admin",
+      "yach_get_org_users", "yach_get_platform_config", "yach_get_user_card", "yach_get_user_config", "yach_get_users_by_id_list", "yach_get_value_tags", "yach_get_workstate_info", "yach_get_young_new_post", "yach_list_contacts", "yach_list_depts", "yach_list_workstates", "yach_search_users", "yach_set_user_info", "yach_set_workstate",
+      "yach_create_group_announcement", "yach_delete_group_announcement", "yach_get_group_announcement_check", "yach_get_group_announcement_detail", "yach_get_group_announcements", "yach_set_group_announcement_top", "yach_update_group_announcement",
+      "yach_accept_group_apply", "yach_batch_group_apply", "yach_get_group_apply_config", "yach_get_group_apply_count", "yach_get_group_apply_list", "yach_ignore_group_apply", "yach_reject_group_apply",
+      "yach_add_external_contact", "yach_delete_external_contact", "yach_get_external_apply_status", "yach_handle_external_apply", "yach_list_external_contacts", "yach_list_my_external_apps",
+      "yach_add_session_top", "yach_get_session_top_config", "yach_get_session_top_list", "yach_remove_session_top", "yach_set_session_top_config", "yach_sort_session_top",
+      "yach_add_group_emot", "yach_get_group_emot_list", "yach_get_group_emot_one", "yach_get_avatar_info", "yach_upload_avatar", "yach_add_side_bar_nav", "yach_del_side_bar_nav", "yach_get_side_bar_conf", "yach_set_side_bar_conf",
+      "yach_add_user_to_discussion", "yach_create_discuss_group", "yach_dismiss_discuss_group", "yach_get_discuss_info", "yach_get_discuss_msg_list", "yach_join_discuss_group", "yach_set_discuss_group_title",
+      "yach_add_vote_choice", "yach_get_vote_count", "yach_get_vote_detail", "yach_intelloft_vote"
+    ]
+  },
+  "toolMetadata": {
+    "yach_send_message": { "optional": true, "sideEffecting": true },
+    "yach_send_group_text": { "optional": true, "sideEffecting": true },
+    "yach_send_card": { "optional": true, "sideEffecting": true },
+    "yach_send_vote": { "optional": true, "sideEffecting": true },
+    "yach_send_at_message": { "optional": true, "sideEffecting": true },
+    "yach_recall_message": { "optional": true, "sideEffecting": true },
+    "yach_send_robot_message": { "optional": true, "sideEffecting": true },
+    "yach_add_group_users": { "optional": true, "sideEffecting": true },
+    "yach_change_group_owner": { "optional": true, "sideEffecting": true },
+    "yach_create_group": { "optional": true, "sideEffecting": true },
+    "yach_dismiss_group": { "optional": true, "sideEffecting": true },
+    "yach_edit_group_info": { "optional": true, "sideEffecting": true },
+    "yach_mute_group": { "optional": true, "sideEffecting": true },
+    "yach_quit_group": { "optional": true, "sideEffecting": true },
+    "yach_remove_group_users": { "optional": true, "sideEffecting": true },
+    "yach_set_group_admin": { "optional": true, "sideEffecting": true },
+    "yach_set_user_info": { "optional": true, "sideEffecting": true },
+    "yach_set_workstate": { "optional": true, "sideEffecting": true },
+    "yach_create_group_announcement": { "optional": true, "sideEffecting": true },
+    "yach_delete_group_announcement": { "optional": true, "sideEffecting": true },
+    "yach_set_group_announcement_top": { "optional": true, "sideEffecting": true },
+    "yach_update_group_announcement": { "optional": true, "sideEffecting": true },
+    "yach_accept_group_apply": { "optional": true, "sideEffecting": true },
+    "yach_batch_group_apply": { "optional": true, "sideEffecting": true },
+    "yach_ignore_group_apply": { "optional": true, "sideEffecting": true },
+    "yach_reject_group_apply": { "optional": true, "sideEffecting": true },
+    "yach_add_external_contact": { "optional": true, "sideEffecting": true },
+    "yach_delete_external_contact": { "optional": true, "sideEffecting": true },
+    "yach_handle_external_apply": { "optional": true, "sideEffecting": true },
+    "yach_add_session_top": { "optional": true, "sideEffecting": true },
+    "yach_remove_session_top": { "optional": true, "sideEffecting": true },
+    "yach_set_session_top_config": { "optional": true, "sideEffecting": true },
+    "yach_sort_session_top": { "optional": true, "sideEffecting": true },
+    "yach_add_group_emot": { "optional": true, "sideEffecting": true },
+    "yach_upload_avatar": { "optional": true, "sideEffecting": true },
+    "yach_set_side_bar_conf": { "optional": true, "sideEffecting": true },
+    "yach_add_side_bar_nav": { "optional": true, "sideEffecting": true },
+    "yach_del_side_bar_nav": { "optional": true, "sideEffecting": true },
+    "yach_create_discuss_group": { "optional": true, "sideEffecting": true },
+    "yach_dismiss_discuss_group": { "optional": true, "sideEffecting": true },
+    "yach_join_discuss_group": { "optional": true, "sideEffecting": true },
+    "yach_set_discuss_group_title": { "optional": true, "sideEffecting": true },
+    "yach_add_user_to_discussion": { "optional": true, "sideEffecting": true },
+    "yach_add_vote_choice": { "optional": true, "sideEffecting": true },
+    "yach_intelloft_vote": { "optional": true, "sideEffecting": true },
+    "yach_get_history": { "optional": true },
+    "yach_search_messages": { "optional": true },
+    "yach_get_message_highlights": { "optional": true },
+    "yach_get_group_unread": { "optional": true },
+    "yach_search_users": { "optional": true },
+    "yach_get_user_card": { "optional": true },
+    "yach_list_depts": { "optional": true },
+    "yach_get_org_users": { "optional": true },
+    "yach_get_users_by_id_list": { "optional": true },
+    "yach_get_platform_config": { "optional": true },
+    "yach_get_user_config": { "optional": true },
+    "yach_list_contacts": { "optional": true },
+    "yach_get_workstate_info": { "optional": true },
+    "yach_get_group_users": { "optional": true },
+    "yach_get_group_info": { "optional": true },
+    "yach_list_squads": { "optional": true },
+    "yach_get_group_announcements": { "optional": true },
+    "yach_get_group_announcement_detail": { "optional": true },
+    "yach_get_group_announcement_check": { "optional": true },
+    "yach_get_group_apply_list": { "optional": true },
+    "yach_get_group_apply_count": { "optional": true },
+    "yach_get_group_apply_config": { "optional": true },
+    "yach_get_external_apply_status": { "optional": true },
+    "yach_list_my_external_apps": { "optional": true },
+    "yach_list_external_contacts": { "optional": true },
+    "yach_list_sessions": { "optional": true },
+    "yach_get_top_sessions": { "optional": true },
+    "yach_get_session_top_list": { "optional": true },
+    "yach_get_session_top_config": { "optional": true },
+    "yach_get_group_emot_list": { "optional": true },
+    "yach_get_group_emot_one": { "optional": true },
+    "yach_get_avatar_info": { "optional": true },
+    "yach_get_side_bar_conf": { "optional": true },
+    "yach_get_discuss_info": { "optional": true },
+    "yach_get_discuss_msg_list": { "optional": true },
+    "yach_get_vote_detail": { "optional": true },
+    "yach_get_vote_count": { "optional": true }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "sessionPath": { "type": "string", "description": "可选：yach-im-full session.json 的绝对路径" },
+      "nimEnabled": { "type": "boolean", "default": true },
+      "autoStartNim": { "type": "boolean", "default": true },
+      "responsePolicy": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean", "default": false },
+          "p2pAllow": { "type": "array", "items": { "type": "string" } },
+          "groupAlways": { "type": "array", "items": { "type": "string" } },
+          "groupMention": { "type": "array", "items": { "type": "string" } },
+          "agentId": { "type": "string" },
+          "model": { "type": "string" },
+          "timeoutMs": { "type": "integer", "minimum": 5000, "maximum": 120000 },
+          "maxConcurrent": { "type": "integer", "minimum": 1, "maximum": 8 },
+          "queueLimit": { "type": "integer", "minimum": 1, "maximum": 200 },
+          "maxReplyChars": { "type": "integer", "minimum": 200, "maximum": 20000 },
+          "respondToOffline": { "type": "boolean" },
+          "respondToBots": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "channelConfigs": {
+    "yach-im-full": {
+      "label": "Yach IM Full",
+      "description": "知音楼企业 IM 聊天通道，支持扫码登录和 NIM 长连接",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "appKey": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "object", "additionalProperties": false, "required": ["source", "provider", "id"], "properties": { "source": { "type": "string", "enum": ["env", "file", "exec", "store"] }, "provider": { "type": "string" }, "id": { "type": "string" } } }
+            ]
+          },
+          "appSecret": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "object", "additionalProperties": false, "required": ["source", "provider", "id"], "properties": { "source": { "type": "string", "enum": ["env", "file", "exec", "store"] }, "provider": { "type": "string" }, "id": { "type": "string" } } }
+            ]
+          },
+          "botId": { "type": "string" },
+          "baseUrl": { "type": "string", "format": "uri-reference" },
+          "name": { "type": "string" },
+          "channelAppId": { "type": "string" },
+          "connectionMode": { "type": "string", "enum": ["channel"] },
+          "replyMode": { "type": "string", "enum": ["stream", "direct"] },
+          "typingExpression": { "type": "string" },
+          "typingExpressions": { "type": "array", "minItems": 1, "maxItems": 13, "items": { "type": "string", "minLength": 1 } },
+          "textChunkLimit": { "type": "integer", "minimum": 1, "maximum": 10000 },
+          "chunkMode": { "type": "string", "enum": ["length", "newline"] },
+          "markdownTableMode": { "type": "string", "enum": ["code", "table"] },
+          "chatHistoryEnabled": { "type": "boolean" },
+          "chatHistoryLimit": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "dmPolicy": { "type": "string", "default": "pairing", "enum": ["open", "pairing", "allowlist", "disabled"] },
+          "allowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
+          "groupPolicy": { "type": "string", "default": "allowlist", "enum": ["open", "allowlist", "disabled"] },
+          "groupAllowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
+          "groupSenderAllowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
+          "requireMention": { "type": "boolean", "default": true },
+          "allowBots": { "anyOf": [ { "type": "boolean" }, { "type": "string", "enum": ["mentions"] } ], "default": true },
+          "groupResponseMode": { "type": "string", "enum": ["all", "humans", "mentions", "paired"], "default": "mentions" },
+          "groups": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "requireMention": { "type": "boolean" },
+                "allowBots": { "anyOf": [ { "type": "boolean" }, { "type": "string", "enum": ["mentions"] } ] },
+                "groupResponseMode": { "type": "string", "enum": ["all", "humans", "mentions", "paired"] },
+                "allowFrom": { "type": "array", "items": { "type": ["string", "number"] } }
+              }
+            }
+          },
+          "botLoopProtection": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "maxEventsPerWindow": { "type": "integer", "minimum": 1, "maximum": 1000 },
+              "windowSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+              "cooldownSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
+            }
+          },
+          "accounts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "appKey": { "anyOf": [ { "type": "string" }, { "type": "object", "additionalProperties": false, "required": ["source", "provider", "id"], "properties": { "source": { "type": "string", "enum": ["env", "file", "exec", "store"] }, "provider": { "type": "string" }, "id": { "type": "string" } } } ] },
+                "appSecret": { "anyOf": [ { "type": "string" }, { "type": "object", "additionalProperties": false, "required": ["source", "provider", "id"], "properties": { "source": { "type": "string", "enum": ["env", "file", "exec", "store"] }, "provider": { "type": "string" }, "id": { "type": "string" } } } ] },
+                "botId": { "type": "string" },
+                "baseUrl": { "type": "string", "format": "uri-reference" }, "name": { "type": "string" }, "channelAppId": { "type": "string" },
+                "connectionMode": { "type": "string", "enum": ["channel"] }, "replyMode": { "type": "string", "enum": ["stream", "direct"] },
+                "typingExpression": { "type": "string" }, "typingExpressions": { "type": "array", "minItems": 1, "maxItems": 13, "items": { "type": "string", "minLength": 1 } }, "textChunkLimit": { "type": "integer", "minimum": 1, "maximum": 10000 },
+                "chunkMode": { "type": "string", "enum": ["length", "newline"] }, "markdownTableMode": { "type": "string", "enum": ["code", "table"] },
+                "chatHistoryEnabled": { "type": "boolean" }, "chatHistoryLimit": { "type": "integer", "minimum": 0, "maximum": 100 },
+                "dmPolicy": { "type": "string", "enum": ["open", "pairing", "allowlist", "disabled"] }, "allowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
+                "groupPolicy": { "type": "string", "enum": ["open", "allowlist", "disabled"] }, "groupAllowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
+                "groupSenderAllowFrom": { "type": "array", "items": { "type": ["string", "number"] } },
+                "requireMention": { "type": "boolean", "default": true },
+                "allowBots": { "anyOf": [ { "type": "boolean" }, { "type": "string", "enum": ["mentions"] } ], "default": true },
+                "groupResponseMode": { "type": "string", "enum": ["all", "humans", "mentions", "paired"], "default": "mentions" },
+                "groups": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "enabled": { "type": "boolean" },
+                      "requireMention": { "type": "boolean" },
+                      "allowBots": { "anyOf": [ { "type": "boolean" }, { "type": "string", "enum": ["mentions"] } ] },
+                      "groupResponseMode": { "type": "string", "enum": ["all", "humans", "mentions", "paired"] },
+                      "allowFrom": { "type": "array", "items": { "type": ["string", "number"] } }
+                    }
+                  }
+                },
+                "botLoopProtection": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "enabled": { "type": "boolean" },
+                    "maxEventsPerWindow": { "type": "integer", "minimum": 1, "maximum": 1000 },
+                    "windowSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+                    "cooldownSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "commandAliases": [
+    { "name": "yach_login", "kind": "runtime-slash" },
+    { "name": "yach_status", "kind": "runtime-slash" },
+    { "name": "yach-refresh-token", "kind": "runtime-slash" },
+    { "name": "yach-response", "kind": "runtime-slash" }
+  ]
+}
