@@ -1,17 +1,15 @@
 /**
- * 企业邮箱客户端（网易企业邮 / Coremail 内核，mailh.qiye.163.com/js6）
+ * 企业邮箱协议客户端（网易企业邮 / Coremail 内核，mailh.qiye.163.com/js6）
  *
- * ⭐ 破解要点（修复旧插件已失效的邮件登录）：
- *   知音楼企业邮做过安全升级，旧客户端版本号（1.9.19.12）被服务端风控，
- *   POST 94capi/txmail/login 只返回"请升级客户端"的静态页。
- *   **传 client-ver >= 2.0.0.5 即放行**，返回真正的网易企业邮 SSO 登录 URL：
+ *   POST 94capi/txmail/login 要求传入最低兼容的 client-ver，返回网易企业邮
+ *   SSO 登录 URL；登录后的短期 cookie 只保留在 yach-im-full 进程内存中。
  *     entry.qiye.163.com/login/ssoLogin?sso_token=***
  *   跟随重定向落到 mailh.qiye.163.com/js6/main.jsp?sid=***，收 Coremail cookie，
  *   从 HTML 提取 sid。之后所有收发件走标准 Coremail wmsvr 协议：
  *     POST /js6/s?sid=X&func=mbox:xxx   body: var=<XML>
  *
- * 逻辑参照旧插件 yach-omni-2.1.5 mail-auth/mail-send client.js，改写为 CJS，
- * 复用当前项目的 capi 签名（自定义带 client-ver 的请求头）。
+ * 这里使用服务端公开给企业邮箱集成的 CAPI/SSO 和 Coremail wmsvr 协议，
+ * 请求头明确标识 yach-im-full，不导入浏览器 profile、系统 Cookie 或其他 App 数据。
  */
 'use strict';
 
@@ -33,7 +31,7 @@ const {
 
 const CAPI_BASE = 'https://yach-capi.zhiyinlou.com';
 const TXMAIL_LOGIN_PATH = '94capi/txmail/login';
-const MAIL_CLIENT_VERSION = '2.1.0'; // ⭐ 必须 >= 2.0.0.5，否则被风控返回升级页
+const MAIL_CLIENT_VERSION = '2.1.0'; // 邮件网关要求的最低兼容协议版本
 const S_OK = 'S_OK';
 const GKEY = 'SDJ0U#$2io9F&#*J';
 const SENT_FOLDER_ID = 3;
@@ -147,10 +145,10 @@ function resolveMailPlatform() {
 }
 
 function mailUserAgent() {
-  return `Mozilla/5.0 Yach/${MAIL_CLIENT_VERSION} Yachlang/zh-CN`;
+  return `TAL-OpenClaw-yach-im-full/${MAIL_CLIENT_VERSION} (Coremail transport)`;
 }
 
-// ── 换 login_url（带高 client-ver 绕过风控）─────────────────
+// ── 获取企业邮箱 SSO 登录入口 ───────────────────────────────
 
 function buildMailLoginHeaders(session, sign, timestamp) {
   const cipher = createCipheriv('aes-128-ecb', Buffer.from(GKEY), null);
@@ -186,7 +184,7 @@ async function requestMailLogin() {
   const loginUrl = String(obj.login_url || '').trim();
   if (!email || !loginUrl) throw new Error('企业邮箱登录入口响应不完整。');
   if (/emailUpdate\.html/i.test(loginUrl)) {
-    throw new Error('企业邮箱返回了"升级客户端"提示页——client-ver 被风控（需 >= 2.0.0.5）。');
+    throw new Error('企业邮箱要求更新兼容协议版本（client-ver 需 >= 2.0.0.5）。');
   }
   return { email, loginUrl, isNewMail: obj.is_newemail === 1 || obj.is_newemail === '1' };
 }

@@ -1,10 +1,10 @@
 /**
  * 通用 Web 请求基础设施（cookie jar + 手动重定向 + 带超时 fetch）
  *
- * 用途：知音楼内部微应用（会议室 huiyi.tal.com / OKR / 邮件等）走的是
- *   「好未来统一登录 SSO → cookie 会话」，而非 capi 签名网关。
- *   这套工具提供浏览器式的 cookie jar、手动跟随 3xx 重定向、Set-Cookie 解析，
- *   是 web-sso 引擎与各 web 业务客户端的共同底座。
+ * 用途：知音楼内部微应用（会议室 huiyi.tal.com / OKR / 邮件等）提供的
+ *   SSO → cookie 会话协议，而非 capi 签名网关。
+ *   这套工具提供兼容 SSO 所需的 cookie jar、手动跟随 3xx 重定向、Set-Cookie 解析；
+ *   cookie 只在当前 yach-im-full 进程内存中流转，不读取浏览器或其他 App 的数据。
  *
  * 纯 Node 原生（require 'node:crypto' 之外无外部依赖）；Node 18+ 内置 fetch。
  * 逻辑参照旧插件 yach-omni-2.1.5 的 shared/fetch.js + web-sso/client.js 重写为 CJS。
@@ -13,7 +13,7 @@
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_COOKIE_PATH = '/';
-const DEFAULT_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) yach-agent';
+const DEFAULT_UA = 'TAL-OpenClaw-yach-im-full/2026.9.4 (SSO transport)';
 
 /**
  * 带超时的 fetch。timeoutMs 优先；未传则默认 30s。

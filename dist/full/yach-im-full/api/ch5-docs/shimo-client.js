@@ -173,8 +173,8 @@ function http2Request(method, urlStr, headers = {}, body = null) {
       [http2.constants.HTTP2_HEADER_PATH]: u.pathname + u.search,
       [http2.constants.HTTP2_HEADER_SCHEME]: 'https',
       [http2.constants.HTTP2_HEADER_AUTHORITY]: u.hostname,
-      // ⭐ user-agent 是必须的：服务器不接受无 UA 的请求（HTTP/2 不自动添加）
-      'user-agent': 'Mozilla/5.0 Yach-Agent/1.0',
+      // 服务端不接受无 User-Agent 的 HTTP/2 请求；使用本插件的透明标识。
+      'user-agent': 'TAL-OpenClaw-yach-im-full/2026.9.4 (Shimo transport)',
       accept: 'application/json, text/plain, */*',
       ...headers,
     };

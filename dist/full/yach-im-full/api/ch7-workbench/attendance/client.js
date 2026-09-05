@@ -193,15 +193,10 @@ function capiPost(path, session, body = {}) {
 // ── clockin-api 请求（Bearer token）──────────────────────────────────────────
 
 function authHeaders(accessToken, workcode, clientVersion = DEFAULT_CLIENT_VERSION) {
-  const base = process.platform === 'darwin'
-    ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
-    : process.platform.startsWith('linux')
-      ? 'Mozilla/5.0 (X11; Linux x86_64)'
-      : 'Mozilla/5.0';
   return {
     Authorization: `Bearer ${accessToken}`,
     'X-Workcode': workcode,
-    'User-Agent': `${base} YachPc/${clientVersion}`,
+    'User-Agent': `TAL-OpenClaw-yach-im-full/${clientVersion} (attendance transport)`,
     Origin: 'https://clockin.zhiyinlou.com',
     Referer: 'https://clockin.zhiyinlou.com/',
     Accept: 'application/json, text/plain, */*',

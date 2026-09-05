@@ -17,11 +17,11 @@ const PREFIX_BASE = {
 
 const DEVICE_PROFILE = {
   clientVer: '2.0.0.5',
-  os: 'mac',
-  osVer: '15.0',
+  os: process.platform === 'darwin' ? 'mac' : process.platform,
+  osVer: process.versions.node,
   deviceName: 'yach-im-full',
   versionArea: 'YachAreaRed',
-  userAgent: 'Yach-Mac/2.0.5 (Macintosh; macOS 15.0; Scale/2.00)',
+  userAgent: 'TAL-OpenClaw-yach-im-full/2026.9.4 (Node.js)',
   timezone: 'Asia/Shanghai',
 };
 
@@ -31,7 +31,7 @@ function resolveUrl(route) {
 }
 
 function deriveDeviceId(workcode = '') {
-  return `TAL${require('node:crypto').createHash('md5').update(`yach-im-full-${workcode || 'anon'}`).digest('hex').toUpperCase()}`;
+  return `yach-im-full-${require('node:crypto').createHash('md5').update(`yach-im-full-${workcode || 'anon'}`).digest('hex').toUpperCase()}`;
 }
 
 function buildHeaders(session = {}, sign, timestamp, extra = {}) {

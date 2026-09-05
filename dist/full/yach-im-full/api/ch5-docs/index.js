@@ -590,7 +590,7 @@ async function loreUploadFile(folderGuid, filePath, opts = {}) {
 // ✅ OKR 已实现（真调打通 2026-07-13），见 ch7-workbench/okr/（独立域名 okr-api.zhiyinlou.com）。
 
 // ── 企业邮箱（真调打通 2026-07-13，网易企业邮/Coremail）──
-// ⭐ 修复了旧实现已失效的邮件登录：POST 94capi/txmail/login 传 client-ver>=2.0.0.5 绕过风控，
+// ⭐ 企业邮箱登录使用 POST 94capi/txmail/login 的兼容 client-ver 字段，
 //   拿到 entry.qiye.163.com SSO → mailh.qiye.163.com/js6（Coremail wmsvr）。
 //   实现在 ./mail/{client,service,store}.js。
 const mail = require('./mail/service');

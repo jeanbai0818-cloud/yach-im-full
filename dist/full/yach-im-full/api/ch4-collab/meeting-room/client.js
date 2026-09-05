@@ -1,7 +1,7 @@
 /**
  * 会议室预约客户端（huiyi.tal.com）
  *
- * ⭐ 破解要点（推翻此前"主 capi 做不了"的结论）：会议室预约**不用浏览器**，
+ * 会议室预约使用知音楼提供的应用 SSO 协议，不需要系统浏览器交互：
  *   走一条纯 HTTP 的好未来统一登录链：
  *     1. POST 94capi/ucenter/auth/code           → 拿一次性 authCode（复用现有签名）
  *     2. controller.100tal.com:8443/idp/app/login → 拼 _authCode，手动跟 302
@@ -229,7 +229,7 @@ function createMeetingRoomApiClient(session) {
     const headers = {
       Accept: 'application/json, text/plain, */*',
       Referer: session.finalUrl || MEETING_BOOKING_URL,
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) yach-agent',
+      'User-Agent': 'TAL-OpenClaw-yach-im-full/2026.9.4 (meeting-room transport)',
     };
     const cookieHeader = buildCookieHeader(cookies, url);
     if (cookieHeader) headers.Cookie = cookieHeader;

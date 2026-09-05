@@ -8,18 +8,16 @@ const querystring = require('querystring');
 const { getSign } = require('./sign');
 const { loadSession } = require('../auth/session');
 
-// ⭐ 设备指纹常量（对齐抓包文档 2026-07-14 的真实公共 header）
-//   知音楼服务端不强校验设备型号，但要求 client-ver / os / yach-version-area 等
-//   header 存在且格式合理。这里统一伪装成一台桌面客户端，全局一致，避免各接口发飘。
-//   —— 参考抓包真实值：client-ver=2.0.1.1, os=ipados, os-ver=26.5, device-name=iPad8,6
-//      本 Agent 是桌面/服务端形态，故 os 用 mac、client-ver 对齐桌面端 2.0.0.5。
+// 平台协议元数据。知音楼 CAPI 要求 client-ver / os / yach-version-area 等
+// 字段存在；这些值明确标识这是 yach-im-full 的 OpenClaw 服务端集成，
+// 不读取主机硬件指纹，也不冒充知音楼桌面或移动客户端。
 const DEVICE_PROFILE = {
-  clientVer:   '2.0.0.5',            // 桌面端版本（与逆向源码一致）
-  os:          'mac',               // 抓包是 ipados；本 Agent 桌面形态用 mac
-  osVer:       '15.0',              // 系统版本（数字串）
-  deviceName:  'yach-agent-desktop',// 设备型号标识
-  versionArea: 'YachAreaRed',       // 版本区域（抓包固定值）
-  userAgent:   'Yach-Mac/2.0.5 (Macintosh; macOS 15.0; Scale/2.00)', // 对齐抓包 UA 格式
+  clientVer:   '2.0.0.5',            // CAPI 接受的最低协议版本字段
+  os:          process.platform === 'darwin' ? 'mac' : process.platform,
+  osVer:       process.versions.node,
+  deviceName:  'yach-im-full',
+  versionArea: 'YachAreaRed',         // 平台路由要求的版本区域字段
+  userAgent:   'TAL-OpenClaw-yach-im-full/2026.9.4 (Node.js)',
   timezone:    'Asia/Shanghai',
 };
 
@@ -155,14 +153,14 @@ function resolveUrl(path) {
   return base + '/' + path;
 }
 
-// device-id 由 workcode 派生，稳定不变（同一账号每次一致），格式对齐抓包 TAL... 前缀
+// device-id 是本插件为当前账号生成的稳定集成标识，不是主机硬件指纹。
 function deriveDeviceId(workcode) {
   const crypto = require('crypto');
-  const h = crypto.createHash('md5').update(`yach-agent-${workcode || 'anon'}`).digest('hex').toUpperCase();
-  return 'TAL' + h; // 例：TAL + 32位大写hex，形似真实 device-id
+  const h = crypto.createHash('md5').update(`yach-im-full-${workcode || 'anon'}`).digest('hex').toUpperCase();
+  return `yach-im-full-${h}`;
 }
 
-// traceid：32 位大写 hex（对齐抓包格式）
+// traceid：平台请求链路追踪字段。
 function genTraceId() {
   const crypto = require('crypto');
   return crypto.randomBytes(16).toString('hex').toUpperCase();
@@ -193,17 +191,16 @@ function buildHeaders(session, sign, timestamp, extra = {}) {
     // ── 签名 ──
     'sign':          sign,
     'timestamp':     String(timestamp),
-    // ── 设备指纹（全局一致）──
+    // ── 集成协议元数据（不代表本机硬件）──
     'device-id':     deriveDeviceId(workcode),
     'device-name':   DEVICE_PROFILE.deviceName,
     'os':            DEVICE_PROFILE.os,
     'os-ver':        DEVICE_PROFILE.osVer,          // ⭐ 抓包带，之前缺
     'system-ver':    DEVICE_PROFILE.osVer,          // 与 os-ver 一致（抓包同值）
-    'client-ver':    DEVICE_PROFILE.clientVer,       // ⭐ 对齐 2.0.0.5，之前是 0.5.0
-    'yach-version-area': DEVICE_PROFILE.versionArea, // ⭐ 抓包带，之前缺
+    'client-ver':    DEVICE_PROFILE.clientVer,
+    'yach-version-area': DEVICE_PROFILE.versionArea,
     'timezone':      DEVICE_PROFILE.timezone,
-    // ⭐ User-Agent：服务端 organ 等接口读 HTTP_USER_AGENT，缺失报 8。
-    //   对齐抓包真实格式 Yach-<Plat>/<ver> (...)，而非之前的 native Mozilla 乱值。
+    // 服务端 organ 等接口要求 User-Agent；这里使用本插件的透明标识。
     'User-Agent':    DEVICE_PROFILE.userAgent,
     'traceid':       genTraceId(),
     // ── 语言/内容 ──
@@ -287,7 +284,7 @@ function request(method, url, headers, body) {
   });
 }
 
-// buildHeaders 导出供调试/自检（验证公共 header 是否对齐抓包）
+// buildHeaders 导出供调试/自检（验证平台协议字段）。
 module.exports = {
   get,
   getPublic,
