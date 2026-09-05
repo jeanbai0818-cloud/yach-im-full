@@ -32,7 +32,7 @@ npm run pack:check
 runtime 入口，并配套 `setupEntry`/`runtimeSetupEntry`。二维码登录、NIM SDK 和浏览器
 兼容层只在 full runtime 或实际执行登录命令时延迟加载。
 
-好未来 Agent 项目的 36 个业务域已全部迁移到 `yach-im-full`：共 284 个唯一 Agent 工具，覆盖即时通信、群组组织、日程会议、文档知识库、文件、考勤、OKR/周报、AI、搜索提醒、企业邮件和开放平台能力。
+好未来 Agent 项目的 36 个业务域已全部迁移到 `yach-im-full`：共 284 个唯一 Agent 工具，覆盖即时通信、群组组织、日程会议、文档知识库、文件、考勤、OKR/周报、AI、搜索提醒、企业邮件和开放平台能力；工资条能力未纳入当前插件。
 
 迁移范围包含参考工程 capability map 中的全部 36 个业务域；完整的工具名、来源模块和副作用标记见自动生成的 [`docs/CAPABILITY-MAP.md`](docs/CAPABILITY-MAP.md)。
 
@@ -102,12 +102,12 @@ openclaw channels status --channel yach-im-full
 
 `yach_punch_on_duty`、`yach_punch_off_duty` 和 `yach_attendance_auth_check` 保留在完整工具集中，但每次都要求调用方显式提供本次真实 `latitude`、`longitude`、`deviceId` 和 `deviceName`；插件只把坐标交给知音楼服务端校验，不生成坐标、不读取主机硬件标识、不构造设备身份。考勤 access_token 只在当前 Gateway 进程内短期复用，不写入本地文件。两种打卡仍属于高风险外部写操作，必须经过 OpenClaw 逐次确认。
 
-## 安装 `2026.9.4-12`
+## 安装 `2026.9.4-16`
 
-手工安装包：`tal-yach-im-full-2026.9.4-12.tgz`。
+手工安装包：`tal-yach-im-full-2026.9.4-16.tgz`。
 
 ```bash
-openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-12.tgz --force --accept-capabilities
+openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-16.tgz --force --accept-capabilities
 openclaw channels add --channel yach-im-full --app-key '<appKey>' --app-secret '<appSecret>'
 openclaw config validate
 openclaw channels list --all
