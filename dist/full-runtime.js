@@ -92,7 +92,7 @@ function registerFullToolApprovals(api) {
     });
 }
 
-function configurePluginState() {
+function configurePrivateStores() {
     sessionStoreApi.configureFileSessionStore();
     okrStoreApi.configureFileOkrSessionStore();
 }
@@ -106,7 +106,7 @@ export function registerFullRuntime(api) {
     }
     if (api.registrationMode && api.registrationMode !== "full")
         return;
-    configurePluginState();
+    configurePrivateStores();
     runtimeApi = api.runtime;
     api.registerService(nimService);
     registerFullCommands(api);
