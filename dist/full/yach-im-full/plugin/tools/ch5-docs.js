@@ -390,10 +390,10 @@ export const yachLoreUploadFile = {
         filePath: Type.String({ description: "本地文件绝对路径" }),
         fileName: Type.Optional(Type.String({ description: "上传后文件名（默认取 filePath 的 basename）" })),
     }),
-    async execute(_id, params) {
+    async execute(_id, params, _signal, _onUpdate, toolContext) {
         const require = createRequire(import.meta.url);
         const ch5 = require("../../api/ch5-docs/index.js");
-        const result = await ch5.loreUploadFile(params.folderGuid, params.filePath, { fileName: params.fileName });
+        const result = await ch5.loreUploadFile(params.folderGuid, params.filePath, { fileName: params.fileName }, toolContext);
         return toolResult(JSON.stringify(result, null, 2));
     },
 };

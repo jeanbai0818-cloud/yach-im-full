@@ -37,15 +37,15 @@ const AVATAR_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
 
 /**
  * 使用本地图片设置当前登录用户头像。
- * uploadToCos 内部负责允许目录、realpath、普通文件和大小校验。
+ * 上传前由 OpenClaw 工具上下文提供 Agent 级媒体访问策略。
  */
-async function setAvatarImage(filePath) {
+async function setAvatarImage(filePath, mediaContext) {
   const ext = path.extname(String(filePath || '')).toLowerCase();
   if (!AVATAR_EXTENSIONS.has(ext)) {
     throw new Error(`头像文件类型不支持：${ext || '(无扩展名)'}；仅支持 PNG/JPG/JPEG/GIF/WEBP。`);
   }
 
-  const uploaded = await uploadToCos(filePath, { project: 'jsapi' });
+  const uploaded = await uploadToCos(filePath, { project: 'jsapi' }, mediaContext);
   const ch9 = require('../ch9-org/index.js');
   await ch9.setUserInfo({ pic: uploaded.url });
   const card = await ch9.getUserCard();

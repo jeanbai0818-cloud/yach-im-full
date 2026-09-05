@@ -32,9 +32,9 @@ export const yachUploadAvatar = {
     parameters: Type.Object({
         filePath: Type.String({ description: "本地图片绝对路径；必须位于 allowedFileRoots，支持 PNG/JPG/JPEG/GIF/WEBP" }),
     }),
-    async execute(_id, params) {
+    async execute(_id, params, _signal, _onUpdate, toolContext) {
         const ch = require("../../api/ch15-avatar/index.js");
-        const result = await ch.setAvatarImage(params.filePath);
+        const result = await ch.setAvatarImage(params.filePath, toolContext);
         return writeToolResult(`✅ 头像更新成功并已回读核验。\nCDN URL: ${result.cdnUrl}`);
     },
 };

@@ -86,10 +86,40 @@ export const sensitiveToolNames = new Set([
 // with tools.alsoAllow: ["yach-im-full"].
 export const optionalToolNames = new Set(fullToolNames);
 
+// OpenClaw passes its trusted filesystem/media policy to tool factories. Keep
+// the other migrated tools as ordinary descriptors, but bind that context for
+// every tool that can turn a local path into an outbound upload.
+const HOST_MEDIA_TOOL_NAMES = new Set([
+    "yach_send_message",
+    "yach_lore_upload_file",
+    "yach_send_mail",
+    "yach_upload_avatar",
+]);
+
+function bindToolContext(tool, context) {
+    return {
+        ...tool,
+        async execute(toolCallId, params, signal, onUpdate) {
+            return tool.execute(toolCallId, params, signal, onUpdate, context);
+        },
+    };
+}
+
+function createHostMediaToolFactory(tool) {
+    const factory = (context) => bindToolContext(tool, context);
+    // Keep the legacy discovery test and host diagnostics able to identify the
+    // factory without executing it.
+    Object.defineProperty(factory, "name", { value: tool.name, configurable: true });
+    return factory;
+}
+
 export function registerFullTools(api) {
     for (const tool of fullTools) {
         if (optionalToolNames.has(tool.name)) {
-            api.registerTool(tool, { optional: true });
+            api.registerTool(
+                HOST_MEDIA_TOOL_NAMES.has(tool.name) ? createHostMediaToolFactory(tool) : tool,
+                { optional: true },
+            );
         }
         else {
             api.registerTool(tool);

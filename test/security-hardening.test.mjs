@@ -93,3 +93,49 @@ test("辅助系统会话只在进程内缓存，不写本机 Cookie/token 文件
   assert.doesNotMatch(mailStore, /writeFileSync|readFileSync|mail-session\.json/u);
   assert.doesNotMatch(intelloft, /h5-token\.json|readFileSync\(tokenPath|writeFileSync\(tmp/u);
 });
+
+test("媒体上传统一使用 OpenClaw Agent 媒体访问策略", async () => {
+  const mediaModules = [
+    "dist/outbound.js",
+    "dist/full/yach-im-full/api/ch1-messaging/index.js",
+    "dist/full/yach-im-full/api/ch5-docs/index.js",
+    "dist/full/yach-im-full/api/ch5-docs/mail/client.js",
+    "dist/full/yach-im-full/utils/cos-upload.js",
+    "dist/full/yach-im-full/api/ch36-intelloft/index.js",
+  ];
+  for (const relativePath of mediaModules) {
+    const source = await fs.readFile(path.join(root, relativePath), "utf8");
+    assert.doesNotMatch(source, /resolveSafeFile|readFileSync|statSync|node:fs\/promises/u, relativePath);
+  }
+
+  const { readAuthorizedMediaFile } = require("../dist/full/yach-im-full/utils/media-access.js");
+  const tempDir = await fs.mkdtemp(path.join(root, ".tmp-media-"));
+  const outsideDir = await fs.mkdtemp(path.join(root, ".tmp-media-outside-"));
+  const insidePath = path.join(tempDir, "inside.txt");
+  const outsidePath = path.join(outsideDir, "outside.txt");
+  await fs.writeFile(insidePath, "authorized media");
+  await fs.writeFile(outsidePath, "outside media");
+  const context = {
+    config: {},
+    agentId: "main",
+    workspaceDir: tempDir,
+    fsPolicy: { root: tempDir },
+  };
+  try {
+    const media = await readAuthorizedMediaFile(insidePath, context);
+    assert.equal(media.name, "inside.txt");
+    assert.equal(media.size, Buffer.byteLength("authorized media"));
+    assert.equal(media.buffer.toString(), "authorized media");
+    await assert.rejects(
+      () => readAuthorizedMediaFile(outsidePath, context),
+      /not in|不在|outside|root|allowed|授权/u,
+    );
+    await assert.rejects(
+      () => readAuthorizedMediaFile(insidePath),
+      /OpenClaw|上下文/u,
+    );
+  } finally {
+    await fs.rm(tempDir, { recursive: true, force: true });
+    await fs.rm(outsideDir, { recursive: true, force: true });
+  }
+});

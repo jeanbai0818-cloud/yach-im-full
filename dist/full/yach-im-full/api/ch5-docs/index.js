@@ -547,17 +547,14 @@ async function loreNodeInfo(topicId, nodeId) {
  * @param {string} filePath   本地文件绝对路径
  * @param {Object} opts        { fileName }
  */
-async function loreUploadFile(folderGuid, filePath, opts = {}) {
-  const fs = require('fs');
-  const path = require('path');
-  const { resolveSafeFile } = require('../../utils/safe-file');
+async function loreUploadFile(folderGuid, filePath, opts = {}, mediaContext) {
+  const { readAuthorizedMediaFile } = require('../../utils/media-access');
   let COS;
   try { COS = require('cos-nodejs-sdk-v5'); }
   catch (e) { throw new Error('loreUploadFile 需要 cos-nodejs-sdk-v5 依赖，请 npm install'); }
   if (!folderGuid) throw new Error('loreUploadFile: folderGuid 必填（短 guid，非数字 node_id）');
-  filePath = resolveSafeFile(filePath);
-  const fileName = opts.fileName || path.basename(filePath);
-  const stat = fs.statSync(filePath);
+  const media = await readAuthorizedMediaFile(filePath, mediaContext);
+  const fileName = opts.fileName || media.name;
 
   // 1. sign：拿 STS 临时凭证 + file_key + JWT token
   const sr = await postJson('617lorebase/file/upload/sign', { file_name: fileName, parent_guid: folderGuid });
@@ -572,14 +569,14 @@ async function loreUploadFile(folderGuid, filePath, opts = {}) {
     }),
   });
   const put = await new Promise((res, rej) => {
-    cos.putObject({ Bucket: sts.bucket, Region: sts.region, Key: o.file_key, Body: fs.readFileSync(filePath) },
+    cos.putObject({ Bucket: sts.bucket, Region: sts.region, Key: o.file_key, Body: media.buffer },
       (err, data) => err ? rej(err) : res(data));
   });
   if (put.statusCode !== 200) throw new Error(`loreUploadFile COS failed: ${put.statusCode}`);
 
   // 3. save 落库
   const sv = await postJson('617lorebase/file/upload/save', {
-    file_size: stat.size, file_key: o.file_key, token: o.token,
+    file_size: media.size, file_key: o.file_key, token: o.token,
     folder_guid: folderGuid, is_folder: false, file_name: fileName,
   });
   if (sv.code !== 200) throw new Error(`loreUploadFile save failed: ${sv.code} ${sv.msg}`);

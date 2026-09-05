@@ -15,12 +15,11 @@
  *   - type=file 有效，type=person 无效
  *   - 手机端只认 yach-static.zhiyinlou.com，不认 NIM NOS
  */
-const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const COS = require('cos-nodejs-sdk-v5');
 const { get } = require('./request');
-const { resolveSafeFile } = require('./safe-file');
+const { readAuthorizedMediaFile } = require('./media-access');
 
 const CDN_DOMAIN = 'https://yach-static.zhiyinlou.com';
 
@@ -44,11 +43,10 @@ function uuidv4() {
  * @param {object} opts      { project: 'person'|'group', env: 'online' }
  * @returns {Promise<{url, key, name, size, ext}>}
  */
-async function uploadToCos(filePath, opts = {}) {
-  filePath = resolveSafeFile(filePath);
-  const buf = fs.readFileSync(filePath);
-  const name = path.basename(filePath);
-  const ext = path.extname(filePath); // 含点，如 .zip
+async function uploadBufferToCos(buf, name, opts = {}) {
+  if (!Buffer.isBuffer(buf)) throw new Error('uploadBufferToCos 需要 Buffer');
+  const filename = path.basename(String(name || 'upload.bin')) || 'upload.bin';
+  const ext = path.extname(filename); // 含点，如 .zip
   const project = opts.project || 'person';
   const env = opts.env || 'online';
 
@@ -77,10 +75,16 @@ async function uploadToCos(filePath, opts = {}) {
 
   return {
     url: `${CDN_DOMAIN}/${key}`,
-    key, name,
+    key, name: filename,
     size: buf.length,
     ext: ext.slice(1).toLowerCase(),
   };
 }
 
-module.exports = { getCosSts, uploadToCos };
+/** Upload a local file after OpenClaw has authorized the path for this Agent. */
+async function uploadToCos(filePath, opts = {}, mediaContext) {
+  const media = await readAuthorizedMediaFile(filePath, mediaContext);
+  return uploadBufferToCos(media.buffer, media.name, opts);
+}
+
+module.exports = { getCosSts, uploadBufferToCos, uploadToCos };

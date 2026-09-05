@@ -87,10 +87,10 @@ export const yachSendMail = {
         cc: Type.Optional(Type.String({ description: "抄送（可选，多个用 ; 分隔）" })),
         attachments: Type.Optional(Type.String({ description: "附件本地绝对路径（可选，多个用 ; 分隔）" })),
     }),
-    async execute(_id, params) {
+    async execute(_id, params, _signal, _onUpdate, toolContext) {
         const require = createRequire(import.meta.url);
         const ch5 = require("../../api/ch5-docs/index.js");
-        const r = await ch5.sendMailText(params);
+        const r = await ch5.sendMailText(params, toolContext);
         return writeToolResult(`✅ ${r.message}\n收件人: ${r.to.join(", ")}\n主题: ${r.subject}` +
             (r.tid ? `\ntid=${r.tid}` : "") +
             (r.verifiedMessageId ? `\n已发送邮件ID=${r.verifiedMessageId}` : "") +

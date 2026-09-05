@@ -14,13 +14,12 @@
 'use strict';
 
 const vm = require('node:vm');
-const fs = require('node:fs');
 const path = require('node:path');
 const querystring = require('node:querystring');
 const { createCipheriv } = require('node:crypto');
 const { getSign } = require('../../../utils/sign');
 const { loadSession } = require('../../../auth/session');
-const { resolveSafeFile } = require('../../../utils/safe-file');
+const { readAuthorizedMediaFile } = require('../../../utils/media-access');
 const {
   followBrowserRedirects,
   buildCookieHeader,
@@ -226,7 +225,7 @@ function isMailSessionError(error) {
   return error instanceof MailWmsvrError && (error.code === 'FA_INVALID_SESSION' || error.code === 'FA_SECURITY');
 }
 
-function createMailClient(session) {
+function createMailClient(session, mediaContext) {
   const finalUrl = new URL(session.finalUrl);
   const appName = session.appName || finalUrl.pathname.split('/').filter(Boolean)[0] || 'js6';
   let cookies = session.cookies;
@@ -342,12 +341,10 @@ function createMailClient(session) {
     },
 
     async uploadAttachment(composeId, filePath) {
-      const resolved = resolveSafeFile(filePath);
-      const stat = fs.statSync(resolved);
-      if (!stat.isFile()) throw new Error(`邮件附件必须是普通文件：${resolved}`);
-      const filename = path.basename(resolved);
+      const media = await readAuthorizedMediaFile(filePath, mediaContext);
+      const filename = media.name;
       const contentType = inferContentType(filename);
-      const file = new File([fs.readFileSync(resolved)], filename, { type: contentType });
+      const file = new File([media.buffer], filename, { type: contentType });
       const form = new FormData();
       form.append('Filedata', file, filename);
       const url = new URL(`${session.origin || finalUrl.origin}/${appName}/compose/upload.jsp`);
@@ -362,7 +359,7 @@ function createMailClient(session) {
       if (!response.ok) throw new Error(`企业邮箱附件上传失败：HTTP ${response.status}`);
       const parsed = parseLooseMailResponse(await response.text());
       if ((typeof parsed.code === 'string' ? parsed.code : '') !== S_OK) throw new MailWmsvrError('compose/upload.jsp', parsed);
-      return { name: filename, size: stat.size, contentType, attachId: readUploadAttachmentId(parsed) };
+      return { name: filename, size: media.size, contentType, attachId: readUploadAttachmentId(parsed) };
     },
 
     async sendMail(params) {

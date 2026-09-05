@@ -45,28 +45,28 @@ export const yachSendMessage = {
         video: Type.Optional(Type.String({ description: "本地视频绝对路径" })),
         imageText: Type.Optional(Type.String({ description: "图文混排时的文字说明（需同时传 image）" })),
     }),
-    async execute(_id, params) {
+    async execute(_id, params, _signal, _onUpdate, toolContext) {
         const messaging = require("../../api/ch1-messaging/index.js");
         const { to, scene = "p2p", text, file, image, audio, video, imageText } = params;
         let result;
         if (scene === "team" && text)
             result = await messaging.sendTeamText(to, text);
         else if (scene === "team" && image && imageText)
-            result = await messaging.sendImageWithText(to, image, imageText, "team");
+            result = await messaging.sendImageWithText(to, image, imageText, "team", toolContext);
         else if (scene === "team")
             throw new Error("群聊通过此工具目前支持 text，或 image+imageText；文件/音频/视频请使用对应的群聊专用能力");
         else if (text)
             result = await messaging.sendText(to, text);
         else if (file)
-            result = await messaging.sendFile(to, file);
+            result = await messaging.sendFile(to, file, toolContext);
         else if (image && imageText)
-            result = await messaging.sendImageWithText(to, image, imageText);
+            result = await messaging.sendImageWithText(to, image, imageText, "p2p", toolContext);
         else if (image)
-            result = await messaging.sendImage(to, image);
+            result = await messaging.sendImage(to, image, toolContext);
         else if (audio)
-            result = await messaging.sendAudio(to, audio);
+            result = await messaging.sendAudio(to, audio, toolContext);
         else if (video)
-            result = await messaging.sendVideo(to, video);
+            result = await messaging.sendVideo(to, video, toolContext);
         else
             throw new Error("至少需要指定一种消息类型：text / file / image / audio / video");
         return toolResult(`✅ 消息已发送\nidServer: ${result.idServer}\nidClient: ${result.idClient}\n` +

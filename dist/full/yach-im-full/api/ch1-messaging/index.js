@@ -21,12 +21,11 @@
  *   3. 所有上传全部走 NIM NOS，手机端均可识别；COS 已完全弃用
  *   4. 图文混排用 custom type=15 + Markdown，一条气泡包含图片和文字
  */
-const fs = require('fs');
 const path = require('path');
 const { getNim, withBrowserGlobalsAsync } = require('../../nim/client');
 const { loadSession } = require('../../auth/session');
 const { post, get } = require('../../utils/request');
-const { resolveSafeFile } = require('../../utils/safe-file');
+const { readAuthorizedMediaFile } = require('../../utils/media-access');
 // 上传策略：主力走 NIM NOS（快，无需 STS）；若 NOS 不可用，回退到 cos-upload.js（腾讯云 COS）
 // const { uploadToCos } = require('../../utils/cos-upload'); // NOS 备用方案
 
@@ -173,12 +172,11 @@ async function sendText(toUserId, text) {
  * @param {string} filePath  本地文件路径
  * @returns {Promise<{idServer, time, to, file:{url, name, size}}>}
  */
-async function sendFile(toUserId, filePath) {
+async function sendFile(toUserId, filePath, mediaContext) {
   const nim = await getNim();
-  filePath = resolveSafeFile(filePath);
-  const buf = fs.readFileSync(filePath);
-  const name = path.basename(filePath);
-  const ext = path.extname(filePath).slice(1).toLowerCase();
+  const media = await readAuthorizedMediaFile(filePath, mediaContext);
+  const { buffer: buf, name } = media;
+  const ext = path.extname(name).slice(1).toLowerCase();
 
   // 1. 上传到 NIM NOS（比 COS 快，且手机端可打开）
   // 备用方案：const uploaded = await uploadToCos(filePath); fileUrl = uploaded.url;
@@ -246,10 +244,10 @@ async function sendFile(toUserId, filePath) {
  * @param {string} filePath  本地图片路径（png/jpg/gif/webp）
  * @returns {Promise<{idServer, time, to, file:{url, name, size}}>}
  */
-async function sendImage(toUserId, filePath) {
+async function sendImage(toUserId, filePath, mediaContext) {
   const ext = path.extname(filePath).slice(1).toLowerCase();
   const mimeMap = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp' };
-  return _sendMedia(toUserId, filePath, 'image', mimeMap[ext] || 'image/png');
+  return _sendMedia(toUserId, filePath, 'image', mimeMap[ext] || 'image/png', mediaContext);
 }
 
 /**
@@ -257,10 +255,10 @@ async function sendImage(toUserId, filePath) {
  * @param {string|number} toUserId
  * @param {string} filePath  本地音频路径（mp3/wav/aac/amr）
  */
-async function sendAudio(toUserId, filePath) {
+async function sendAudio(toUserId, filePath, mediaContext) {
   const ext = path.extname(filePath).slice(1).toLowerCase();
   const mimeMap = { mp3: 'audio/mpeg', wav: 'audio/wav', aac: 'audio/aac', amr: 'audio/amr', flac: 'audio/flac' };
-  return _sendMedia(toUserId, filePath, 'audio', mimeMap[ext] || 'audio/mpeg');
+  return _sendMedia(toUserId, filePath, 'audio', mimeMap[ext] || 'audio/mpeg', mediaContext);
 }
 
 /**
@@ -268,10 +266,10 @@ async function sendAudio(toUserId, filePath) {
  * @param {string|number} toUserId
  * @param {string} filePath  本地视频路径（mp4/mov/avi）
  */
-async function sendVideo(toUserId, filePath) {
+async function sendVideo(toUserId, filePath, mediaContext) {
   const ext = path.extname(filePath).slice(1).toLowerCase();
   const mimeMap = { mp4: 'video/mp4', avi: 'video/avi', mov: 'video/quicktime' };
-  return _sendMedia(toUserId, filePath, 'video', mimeMap[ext] || 'video/mp4');
+  return _sendMedia(toUserId, filePath, 'video', mimeMap[ext] || 'video/mp4', mediaContext);
 }
 
 /**
@@ -285,16 +283,15 @@ async function sendVideo(toUserId, filePath) {
  * @param {string} text  图片下方的文字
  * @returns {Promise<{idServer, time, to, imgUrl}>}
  */
-async function sendImageWithText(toUserId, imagePath, text, scene = 'p2p') {
+async function sendImageWithText(toUserId, imagePath, text, scene = 'p2p', mediaContext) {
   const targetScene = normalizeScene(scene);
   const nim = await getNim();
-  imagePath = resolveSafeFile(imagePath);
 
   // 上传图片到 NIM NOS
   // 备用方案：const uploaded = await uploadToCos(imagePath); imgUrl = uploaded.url;
-  const imgBuf = fs.readFileSync(imagePath);
-  const imgName = path.basename(imagePath);
-  const imgExt = path.extname(imagePath).slice(1).toLowerCase();
+  const media = await readAuthorizedMediaFile(imagePath, mediaContext);
+  const { buffer: imgBuf, name: imgName } = media;
+  const imgExt = path.extname(imgName).slice(1).toLowerCase();
   const mimeMap = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' };
   const imgBlob = new (require('buffer').Blob)([imgBuf], { type: mimeMap[imgExt] || 'image/png' });
   try { Object.defineProperty(imgBlob, 'name', { value: imgName }); } catch {}
@@ -423,11 +420,10 @@ async function searchMessages(keyword, limit = 20, sessionId) {
 // ── 内部工具 ─────────────────────────────────────────────────
 
 /** NIM sendFile 通用封装（图片/音频/视频） */
-async function _sendMedia(toUserId, filePath, type, mime) {
+async function _sendMedia(toUserId, filePath, type, mime, mediaContext) {
   const nim = await getNim();
-  filePath = resolveSafeFile(filePath);
-  const buf = fs.readFileSync(filePath);
-  const name = path.basename(filePath);
+  const media = await readAuthorizedMediaFile(filePath, mediaContext);
+  const { buffer: buf, name } = media;
   const { Blob } = require('buffer');
   const blob = new Blob([buf], { type: mime });
   try { Object.defineProperty(blob, 'name', { value: name }); } catch {}

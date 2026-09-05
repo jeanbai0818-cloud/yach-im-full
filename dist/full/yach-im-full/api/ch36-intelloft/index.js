@@ -4,8 +4,6 @@
  * 来源：yach-aio 2.1.5。这里按当前项目的运行时约定重新实现，
  * 不依赖来源项目的绝对路径、私有状态或自升级逻辑。
  */
-const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const https = require('https');
@@ -372,7 +370,7 @@ function validateImageUrl(imageUrl) {
   return url;
 }
 
-function downloadImage(url, targetPath, redirectCount = 0) {
+function downloadImage(url, redirectCount = 0) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, (res) => {
       const status = Number(res.statusCode || 0);
@@ -389,7 +387,7 @@ function downloadImage(url, targetPath, redirectCount = 0) {
           reject(error);
           return;
         }
-        downloadImage(next, targetPath, redirectCount + 1).then(resolve, reject);
+        downloadImage(next, redirectCount + 1).then(resolve, reject);
         return;
       }
       if (status < 200 || status >= 300) {
@@ -409,21 +407,18 @@ function downloadImage(url, targetPath, redirectCount = 0) {
         reject(new Error(`图片超过 ${MAX_IMAGE_BYTES} bytes`));
         return;
       }
-      const output = fs.createWriteStream(targetPath, { flags: 'wx', mode: 0o600 });
+      const chunks = [];
       let received = 0;
       res.on('data', (chunk) => {
         received += chunk.length;
         if (received > MAX_IMAGE_BYTES) {
           res.destroy(new Error(`图片超过 ${MAX_IMAGE_BYTES} bytes`));
+          return;
         }
+        chunks.push(chunk);
       });
-      res.on('error', (error) => {
-        output.destroy();
-        reject(error);
-      });
-      output.on('error', reject);
-      output.on('finish', () => resolve(received));
-      res.pipe(output);
+      res.on('error', reject);
+      res.on('end', () => resolve(Buffer.concat(chunks, received)));
     });
     req.setTimeout(IMAGE_DOWNLOAD_TIMEOUT_MS, () => req.destroy(new Error('图片下载超时')));
     req.on('error', reject);
@@ -436,20 +431,14 @@ async function prepareImageForIntelloft(imageUrl) {
     return { url: url.toString(), fileSize: 0 };
   }
 
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'haoweilai-intelloft-'));
   const sourceExtension = path.extname(url.pathname).toLowerCase();
   const safeExtension = ['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(sourceExtension)
     ? sourceExtension
     : '.png';
-  const tempPath = path.join(tempDir, `image${safeExtension}`);
-  try {
-    const fileSize = await downloadImage(url, tempPath);
-    const { uploadToCos } = require('../../utils/cos-upload');
-    const uploaded = await uploadToCos(tempPath, { project: 'jsapi' });
-    return { url: uploaded.url, fileSize };
-  } finally {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  }
+  const imageBuffer = await downloadImage(url);
+  const { uploadBufferToCos } = require('../../utils/cos-upload');
+  const uploaded = await uploadBufferToCos(imageBuffer, `image${safeExtension}`, { project: 'jsapi' });
+  return { url: uploaded.url, fileSize: imageBuffer.length };
 }
 
 async function askWithImage(imageUrl, question, opts = {}) {

@@ -65,16 +65,16 @@ async function ensureSession(output) {
   return session;
 }
 
-async function withMail(task, output) {
+async function withMail(task, output, mediaContext) {
   let session = await ensureSession(output);
   try {
-    return await task(createMailClient(session), session);
+    return await task(createMailClient(session, mediaContext), session);
   } catch (error) {
     if (!isMailSessionError(error)) throw error;
     output && output('mail: 邮箱会话已失效，正在重新 SSO 换登后重试...');
     session = await bootstrapMailSession();
     writeStoredMailSession(session);
-    return task(createMailClient(session), session);
+    return task(createMailClient(session, mediaContext), session);
   }
 }
 
@@ -151,7 +151,7 @@ async function readMailMessage(opts = {}) {
  * 发文本邮件（写操作）
  * @param {object} params { to:string[]|string, subject, content, cc?, bcc?, attachments?:string[], output? }
  */
-async function sendMailText(params = {}) {
+async function sendMailText(params = {}, mediaContext) {
   const toList = Array.isArray(params.to) ? params.to : String(params.to || '').split(/[;,\n]/).map((s) => s.trim()).filter(Boolean);
   if (toList.length === 0) throw new Error('收件人不能为空。');
   const subject = String(params.subject || '').trim();
@@ -231,7 +231,7 @@ async function sendMailText(params = {}) {
           : '邮件已发送（未在已发送搜到，可能有延迟）。'
         : '邮件已提交，但未拿到投递 tid。',
     };
-  }, params.output);
+  }, params.output, mediaContext);
 }
 
 function normalizeRecallResults(results) {

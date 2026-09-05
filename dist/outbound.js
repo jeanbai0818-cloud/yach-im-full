@@ -1,6 +1,8 @@
-import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import { chunkMarkdownText } from "openclaw/plugin-sdk/reply-runtime";
+import { readLocalFileFromRoots } from "openclaw/plugin-sdk/file-access-runtime";
+import { getAgentScopedMediaLocalRoots } from "openclaw/plugin-sdk/media-local-roots";
+import { readRemoteMediaBuffer } from "openclaw/plugin-sdk/media-runtime";
 import { resolveYachAccountByBotId, resolveYachAccount, resolveYachAccountSecrets } from "./config.js";
 import { YachClient, mediaFilename, mediaKindForPath } from "./oapi.js";
 import { transformModelTextToFoldLinks } from "./model-fold-links.js";
@@ -90,16 +92,59 @@ function contentTypeForPath(path) {
     };
     return typeByExtension[extname(path).toLowerCase()] ?? "application/octet-stream";
 }
-async function readMedia(mediaUrl, mediaReadFile) {
+const OUTBOUND_MEDIA_MAX_BYTES = 100 * 1024 * 1024;
+function uniqueMediaRoots(values) {
+    return [...new Set(values
+        .filter((value) => typeof value === "string" && value.trim())
+        .map((value) => value.trim()))];
+}
+function resolveOutboundMediaRoots(params) {
+    const explicit = params.mediaLocalRoots;
+    if (Array.isArray(explicit) && explicit.length > 0)
+        return uniqueMediaRoots(explicit);
+    const roots = [];
+    const accessRoots = params.mediaAccess?.localRoots;
+    if (Array.isArray(accessRoots))
+        roots.push(...accessRoots);
+    try {
+        roots.push(...getAgentScopedMediaLocalRoots(params.cfg ?? {}, params.agentId));
+    }
+    catch {
+        // Some one-shot/plugin test contexts do not carry a full Agent config.
+    }
+    if (params.mediaAccess?.workspaceDir)
+        roots.push(params.mediaAccess.workspaceDir);
+    if (params.workspaceDir)
+        roots.push(params.workspaceDir);
+    return uniqueMediaRoots(roots);
+}
+async function readMedia(mediaUrl, params) {
+    if (/^https?:\/\//i.test(mediaUrl)) {
+        const result = await readRemoteMediaBuffer({
+            url: mediaUrl,
+            maxBytes: OUTBOUND_MEDIA_MAX_BYTES,
+        });
+        return result.buffer;
+    }
+    const mediaReadFile = params.mediaAccess?.readFile ?? params.mediaReadFile;
     if (mediaReadFile)
         return mediaReadFile(mediaUrl);
-    if (/^https?:\/\//i.test(mediaUrl)) {
-        const response = await fetch(mediaUrl);
-        if (!response.ok)
-            throw new Error(`failed to fetch media: HTTP ${response.status}`);
-        return Buffer.from(await response.arrayBuffer());
+    const roots = resolveOutboundMediaRoots(params);
+    if (roots.length === 0) {
+        throw new Error("OpenClaw 未提供当前 Agent 的授权媒体目录，拒绝读取本地媒体文件");
     }
-    return readFile(mediaUrl);
+    const result = await readLocalFileFromRoots({
+        filePath: mediaUrl,
+        roots,
+        label: "OpenClaw outbound media roots",
+        maxBytes: OUTBOUND_MEDIA_MAX_BYTES,
+        hardlinks: "reject",
+        symlinks: "reject",
+    });
+    if (!result) {
+        throw new Error("媒体文件不在 OpenClaw 当前 Agent 的授权媒体目录内");
+    }
+    return result.buffer;
 }
 function resolveAccount(cfg, accountId) {
     return accountId ? resolveYachAccount(cfg, accountId) : resolveYachAccountByBotId(cfg, accountId);
@@ -133,7 +178,7 @@ async function sendMedia(params) {
             ids.push(textId);
         kinds.push("text");
     }
-    const data = await readMedia(params.mediaUrl, params.mediaReadFile);
+    const data = await readMedia(params.mediaUrl, params);
     const filename = mediaFilename(params.mediaUrl);
     const kind = mediaKindForPath(filename, contentTypeForPath(filename));
     const cosType = kind === "file" || kind === "video" || kind === "audio" ? "file" : "image";

@@ -374,7 +374,9 @@ const yachPluginBase = {
     actions: {
         describeMessageTool: ({ cfg, accountId }) => {
             const account = resolveYachAccount(cfg, accountId);
-            return account.configured ? { actions: ["send", "react"] } : null;
+            return account.configured
+                ? { actions: ["send", "react"], mediaSourceParams: { send: ["mediaUrl", "mediaUrls"] } }
+                : null;
         },
         supportsAction: ({ action }) => action === "react",
         handleAction: async ({ action, params, cfg, accountId, toolContext, requesterSenderId }) => {
