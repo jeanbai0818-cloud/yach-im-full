@@ -92,18 +92,9 @@ function registerFullToolApprovals(api) {
     });
 }
 
-function configurePluginState(api) {
-    const state = api.runtime?.state;
-    if (!state || typeof state.openSyncKeyedStore !== "function") {
-        throw new Error("yach-im-full 需要 OpenClaw runtime.state.openSyncKeyedStore；不会回退到文件、浏览器或共享 session。");
-    }
-    const openStore = (namespace, maxEntries) => state.openSyncKeyedStore({
-        namespace,
-        maxEntries,
-        overflowPolicy: "reject-new",
-    });
-    sessionStoreApi.configureSessionStore(openStore("nim-session", 1));
-    okrStoreApi.configureOkrSessionStore(openStore("okr-session", 1));
+function configurePluginState() {
+    sessionStoreApi.configureFileSessionStore();
+    okrStoreApi.configureFileOkrSessionStore();
 }
 
 export function registerFullRuntime(api) {
@@ -115,7 +106,7 @@ export function registerFullRuntime(api) {
     }
     if (api.registrationMode && api.registrationMode !== "full")
         return;
-    configurePluginState(api);
+    configurePluginState();
     runtimeApi = api.runtime;
     api.registerService(nimService);
     registerFullCommands(api);

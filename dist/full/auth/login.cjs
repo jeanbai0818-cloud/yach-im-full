@@ -181,8 +181,8 @@ async function login(options = {}) {
     const session = result.session;
     if (!session.cloudtoken) {
       try {
-        // 登录态尚未写入 OpenClaw plugin-state，续 cloudtoken 时必须用刚
-        // 拿到的 Authorization，而不是可能已失效的旧登录态。
+        // 登录态尚未写入 yach-im-full 私有状态文件，续 cloudtoken 时必须
+        // 用刚拿到的 Authorization，而不是可能已失效的旧登录态。
         const refreshed = await post('usergroup/account/refresh/token', {}, () => session);
         if (refreshed.code === 200 && refreshed.obj?.cloudtoken) {
           session.cloudtoken = refreshed.obj.cloudtoken;

@@ -24,36 +24,35 @@ test("工资条能力已从发布运行时、工具注册和 manifest 完整移�
   assert.equal(workbench.getPayslip, undefined);
 });
 
-test("登录态只使用 yach-im-full 自己的 OpenClaw plugin-state", async () => {
+test("登录态只使用 yach-im-full 自己的私有状态文件", async () => {
   const source = await fs.readFile(path.join(root, "dist/full/auth/session.cjs"), "utf8");
-  assert.doesNotMatch(source, /node:(?:fs|os|path)|readFileSync|writeFileSync|session\.json|YACH_IM_FULL_(?:SESSION|STATE|OPENCLAW)/u);
-  assert.match(source, /plugin-state/u);
+  assert.match(source, /node:fs/u);
+  assert.match(source, /\.openclaw.*yach-im-full.*state/u);
+  assert.match(source, /nim-session\.json/u);
+  assert.doesNotMatch(source, /YACH_IM_FULL_(?:SESSION|STATE|OPENCLAW)|haoweilai-agent|browser|keychain|Cookies\.binarycookies/u);
   const sessionApi = require("../dist/full/auth/session.cjs");
-  const values = new Map();
-  sessionApi.configureSessionStore({
-    register(key, value) { values.set(key, structuredClone(value)); },
-    lookup(key) { return values.has(key) ? structuredClone(values.get(key)) : undefined; },
-  });
+  const tempDir = await fs.mkdtemp(path.join(root, ".tmp-session-"));
+  const sessionPath = path.join(tempDir, "nim-session.json");
+  sessionApi.configureFileSessionStore(sessionPath);
   try {
     sessionApi.saveSession({ token: "api", cloudtoken: "nim", user: { id: "438470" } });
-    assert.equal(values.has("default"), true);
     assert.equal(sessionApi.loadSession().cloudtoken, "nim");
-    assert.match(sessionApi.resolvedSessionPath(), /^openclaw-state:\/\/plugin\/yach-im-full\//u);
+    assert.equal(sessionApi.resolvedSessionPath(), sessionPath);
+    assert.equal((await fs.stat(sessionPath)).mode & 0o777, 0o600);
   } finally {
     sessionApi.clearSessionStore();
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
-test("OKR 换票态只使用 yach-im-full 自己的 OpenClaw plugin-state", async () => {
+test("OKR 换票态只使用 yach-im-full 自己的私有状态文件", async () => {
   const source = await fs.readFile(path.join(root, "dist/full/yach-im-full/api/ch7-workbench/okr/store.js"), "utf8");
-  assert.doesNotMatch(source, /node:(?:fs|os|path)|readFileSync|writeFileSync|okr-session\.json|session\.json/u);
-  assert.match(source, /plugin-state/u);
+  assert.match(source, /okr-session\.json/u);
+  assert.doesNotMatch(source, /haoweilai-agent|browser|keychain|Cookies\.binarycookies/u);
   const okrStore = require("../dist/full/yach-im-full/api/ch7-workbench/okr/store.js");
-  const values = new Map();
-  okrStore.configureOkrSessionStore({
-    register(key, value) { values.set(key, structuredClone(value)); },
-    lookup(key) { return values.has(key) ? structuredClone(values.get(key)) : undefined; },
-  });
+  const tempDir = await fs.mkdtemp(path.join(root, ".tmp-okr-"));
+  const okrPath = path.join(tempDir, "okr-session.json");
+  okrStore.configureFileOkrSessionStore(okrPath);
   const session = {
     accessToken: "okr-token",
     workcode: "332776",
@@ -62,10 +61,12 @@ test("OKR 换票态只使用 yach-im-full 自己的 OpenClaw plugin-state", asyn
   };
   try {
     assert.equal(okrStore.readStoredOkrSession(), null);
-    assert.equal(okrStore.writeStoredOkrSession(session), "openclaw-state://plugin/yach-im-full/okr-session/default");
+    assert.equal(okrStore.writeStoredOkrSession(session), okrPath);
     assert.deepEqual(okrStore.readStoredOkrSession(), session);
+    assert.equal((await fs.stat(okrPath)).mode & 0o777, 0o600);
   } finally {
     okrStore.clearOkrSessionStore();
+    await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 

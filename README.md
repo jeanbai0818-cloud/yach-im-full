@@ -13,7 +13,7 @@
 它们是两套独立连接，共存于同一个 Gateway 进程：
 
 - Channel SDK 长连接：使用 `appKey/appSecret`，负责机器人频道的入站消息；出站仍使用 Yach OAPI。
-- NIM WebSocket 长连接：只读取 `yach-im-full` 自己的 OpenClaw plugin-state 中的 `user.id` 和 `cloudtoken`，使用固定 NIM appKey 建立人对人/群聊连接；已有有效 NIM 凭据时不需要扫码。
+- NIM WebSocket 长连接：只读取 `yach-im-full` 自己的私有状态文件中的 `user.id` 和 `cloudtoken`，使用固定 NIM appKey 建立人对人/群聊连接；已有有效 NIM 凭据时不需要扫码。
 
 迁移工具和自动响应都从同一个 `NimListener`/NIM SDK 实例执行，不会重复建立同账号的第二个 NIM client。
 
@@ -78,7 +78,7 @@ openclaw channels status --channel yach-im-full
 /yach_login
 ```
 
-命令会返回二维码并在后台轮询 60 秒；成功后登录态写入 OpenClaw 为 `yach-im-full` 隔离的 plugin-state SQLite 命名空间 `nim-session/default`，并立即尝试启动 NIM。OKR 换票态同样写入 `okr-session/default`。插件不读取共享 session、浏览器 Cookie、系统钥匙串或其他 App 的凭据文件。已有 `user.id + cloudtoken` 时，NIM 直接启动，不会要求扫码；没有有效 NIM 登录态，或 HTTP/CAPI `token/accesstoken` 已失效时，才提示执行 `/yach_login`。用 `/yach_status` 查看进度；需要时用 `/yach-refresh-token` 刷新仍有效的登录态。
+命令会返回二维码并在后台轮询 60 秒；成功后登录态写入 `~/.openclaw/yach-im-full/state/nim-session.json`，并立即尝试启动 NIM。OKR 换票态写入同目录的 `okr-session.json`。目录权限为 700、状态文件权限为 600，插件只访问这两个固定路径，不读取共享 session、浏览器 Cookie、系统钥匙串或其他 App 的凭据文件。已有 `user.id + cloudtoken` 时，NIM 直接启动，不会要求扫码；没有有效 NIM 登录态，或 HTTP/CAPI `token/accesstoken` 已失效时，才提示执行 `/yach_login`。用 `/yach_status` 查看进度；需要时用 `/yach-refresh-token` 刷新仍有效的登录态。
 
 ### 群聊默认行为
 
@@ -184,8 +184,8 @@ openclaw config validate
 - 284 个迁移工具全部保留在 `contracts.tools`；涉及消息发送、组织修改或考勤写卡的工具标记为 `sideEffecting` 并要求显式确认，查询组织/消息/会话等敏感工具要求通过 `tools.allow` 显式启用。
 - `tool-discovery` 只发布工具能力，不启动 NIM、后台 service 或 HTTP 路由；setup 入口使用 bundled setup contract，不加载 Channel SDK/OAPI/NIM 运行时。
 - 入站消息在进入 OpenClaw context 前经过官方 channel ingress resolver；私聊默认 pairing，群聊默认 allowlist。
-- `/plugin/yach-im-full/*` 路由统一使用 Gateway 认证；二维码登录和登录态只属于 `yach-im-full` 的 `nim-session` plugin-state 命名空间，不读取任何共享 session。
-- NIM 和 OKR 凭据由 OpenClaw plugin-state 托管，插件只使用自己的命名空间；不读取本机 Cookie、浏览器存储、系统钥匙串或其他 App 数据。考勤坐标和设备字段必须由调用方显式提供并由服务端校验。
+- `/plugin/yach-im-full/*` 路由统一使用 Gateway 认证；二维码登录和登录态只属于 `yach-im-full` 自己的固定状态文件，不读取任何共享 session。
+- NIM 和 OKR 凭据由插件自有的私有状态文件保存，插件只使用自己的目录；不读取本机 Cookie、浏览器存储、系统钥匙串或其他 App 数据。考勤坐标和设备字段必须由调用方显式提供并由服务端校验。
 
 ## 迁移分析
 

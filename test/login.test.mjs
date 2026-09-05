@@ -35,9 +35,10 @@ test("公共登录请求不携带旧 session 凭证", () => {
   assert.equal(headers.os, "mac");
 });
 
-test("session reader 只使用 yach-im-full 专属 OpenClaw plugin-state", () => {
-  const store = memoryStore();
-  sessionApi.configureSessionStore(store);
+test("session reader 只使用 yach-im-full 专属私有状态文件", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "yach-im-full-state-"));
+  const sessionPath = path.join(dir, "nim-session.json");
+  sessionApi.configureFileSessionStore(sessionPath);
   try {
     assert.deepEqual(sessionApi.loadSession(), {
       token: "",
@@ -49,15 +50,18 @@ test("session reader 只使用 yach-im-full 专属 OpenClaw plugin-state", () =>
       user: {},
     });
     assert.equal(sessionApi.resolvedSessionPath(), null);
-    assert.equal(sessionApi.SESSION_LOCATION, "openclaw-state://plugin/yach-im-full/nim-session/default");
+    assert.equal(sessionApi.DEFAULT_SESSION_PATH.endsWith("/.openclaw/yach-im-full/state/nim-session.json"), true);
+    assert.equal(sessionApi.resolvedSessionPath(), null);
   } finally {
     sessionApi.clearSessionStore();
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });
 
 test("session reader 不回退到共享 session、环境变量或其他插件", () => {
-  const store = memoryStore();
-  sessionApi.configureSessionStore(store);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "yach-im-full-state-"));
+  const sessionPath = path.join(dir, "nim-session.json");
+  sessionApi.configureFileSessionStore(sessionPath);
   const oldValues = {
     sessionPath: process.env.YACH_IM_FULL_SESSION_PATH,
     stateDir: process.env.YACH_IM_FULL_STATE_DIR,
@@ -70,7 +74,8 @@ test("session reader 不回退到共享 session、环境变量或其他插件", 
     assert.equal(sessionApi.loadSession().cloudtoken, "");
     sessionApi.saveSession({ cloudtoken: "plugin-token", user: { id: "438470" } });
     assert.equal(sessionApi.loadSession().cloudtoken, "plugin-token");
-    assert.equal(sessionApi.resolvedSessionPath(), "openclaw-state://plugin/yach-im-full/nim-session/default");
+    assert.equal(sessionApi.resolvedSessionPath(), sessionPath);
+    assert.equal(fs.statSync(sessionPath).mode & 0o777, 0o600);
   } finally {
     for (const [key, value] of Object.entries(oldValues)) {
       const envKey = key === "sessionPath" ? "YACH_IM_FULL_SESSION_PATH" : key === "stateDir" ? "YACH_IM_FULL_STATE_DIR" : "YACH_IM_FULL_OPENCLAW_SESSION_PATH";
@@ -78,6 +83,7 @@ test("session reader 不回退到共享 session、环境变量或其他插件", 
       else process.env[envKey] = value;
     }
     sessionApi.clearSessionStore();
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });
 

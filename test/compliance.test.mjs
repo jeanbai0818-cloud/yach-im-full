@@ -7,22 +7,6 @@ const { fullTools, optionalToolNames, sideEffectingToolNames } = await import(".
 const { registerFullRuntime } = await import("../dist/full-runtime.js");
 const { resolveYachAccount, inspectYachAccount } = await import("../dist/config.js");
 
-function pluginStateRuntime() {
-  const stores = new Map();
-  return {
-    state: {
-      openSyncKeyedStore({ namespace }) {
-        if (!stores.has(namespace)) stores.set(namespace, new Map());
-        const values = stores.get(namespace);
-        return {
-          register(key, value) { values.set(key, structuredClone(value)); },
-          lookup(key) { return values.has(key) ? structuredClone(values.get(key)) : undefined; },
-        };
-      },
-    },
-  };
-}
-
 test("manifest declares every optional runtime tool and its side-effect status", () => {
   const contractNames = new Set(manifest.contracts.tools);
   const metadata = manifest.toolMetadata ?? {};
@@ -58,7 +42,6 @@ test("full runtime asks for approval before Yach external side effects", async (
   const calls = { tools: [], services: [], commands: [], routes: [] };
   registerFullRuntime({
     registrationMode: "full",
-    runtime: pluginStateRuntime(),
     registerTool(tool, options) { calls.tools.push({ name: tool.name, options }); },
     registerService(service) { calls.services.push(service.id); },
     registerCommand(command) { calls.commands.push(command.name); },
