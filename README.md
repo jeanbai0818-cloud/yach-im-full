@@ -103,12 +103,12 @@ openclaw channels status --channel yach-im-full
 
 `yach_punch_on_duty`、`yach_punch_off_duty` 和 `yach_attendance_auth_check` 保留在完整工具集中，但每次都要求调用方显式提供本次真实 `latitude`、`longitude`、`deviceId` 和 `deviceName`；插件只把坐标交给知音楼服务端校验，不生成坐标、不读取主机硬件标识、不构造设备身份。考勤 access_token 只在当前 Gateway 进程内短期复用，不写入本地文件。两种打卡仍属于高风险外部写操作，必须经过 OpenClaw 逐次确认。
 
-## 安装 `2026.9.4-20`
+## 安装 `2026.9.4-21`
 
-手工安装包：`tal-yach-im-full-2026.9.4-20.tgz`。
+手工安装包：`tal-yach-im-full-2026.9.4-21.tgz`。
 
 ```bash
-openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-20.tgz --force --accept-capabilities
+openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-21.tgz --force --accept-capabilities
 openclaw channels add --channel yach-im-full --app-key '<appKey>' --app-secret '<appSecret>'
 openclaw config validate
 openclaw channels list --all
@@ -212,3 +212,27 @@ openclaw config validate
 
 - [OpenClaw 官方构建插件说明](https://docs.openclaw.ai/plugins/building-plugins)
 - [OpenClaw 官方频道插件 SDK](https://docs.openclaw.ai/plugins/sdk-channel-plugins)
+
+### 云端历史查询参数
+
+`yach_message_history` 使用 `action: "get_history"`。支持 `groupName`、`groupTid` 或 `sessionId` 选择会话。
+
+私聊可以直接使用用户 ID：
+
+```json
+{
+  "action": "get_history",
+  "userId": "438470",
+  "limit": 50,
+  "startTime": 1788000000000,
+  "endTime": 1788850000000
+}
+```
+
+- `limit`：最近 N 条匹配消息，默认 20，最大 1000，自动按云端单页 100 条分页。
+- `startTime` / `endTime`：Unix 毫秒时间戳；终点默认查询时刻。`beforeTime` 保留为终点兼容参数，显式 `endTime` 优先。
+- `senderKind`：`all`（默认）、`bot`、`human`、`unknown`。身份只根据明确机器人字段分类；Server 客户端、自定义卡片和昵称均不能证明机器人身份。
+- `maxPages`：最多扫描页数，默认 20，最大 100。达到返回条数或扫描上限不表示整个时间段已读完。
+- 返回 `nextCursor` 时，将其中的 `startTime`、`endTime`、`lastMsgId` 与原会话和筛选一起传入继续查询。
+
+结果包含 `source: "nim-cloud"`、分页状态和警告。消息包含发送者 ID/昵称、`fromClientType`、消息类型、毫秒时间、服务端消息 ID、正文和 `senderKind`/`senderKindSource`；`unknown` 不会被当成人类。

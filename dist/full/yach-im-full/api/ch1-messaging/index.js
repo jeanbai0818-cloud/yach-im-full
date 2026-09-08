@@ -381,8 +381,10 @@ async function getHistory(sessionOrUserId, limitOrOptions = 20) {
     to: id,
     limit,
     endTime: Number(options.endTime) || 0,
+    beginTime: Number(options.beginTime) || 0,
+    lastMsgId: options.lastMsgId,
     reverse: false,
-    asc: true,
+    asc: false,
     done,
   }));
   return result?.msgs || [];

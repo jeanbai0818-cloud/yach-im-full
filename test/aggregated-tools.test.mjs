@@ -39,4 +39,7 @@ test("aggregate schemas use finite action branches", () => {
   const historySchema = JSON.stringify(history.parameters);
   assert.match(historySchema, /groupName/u);
   assert.match(historySchema, /groupTid/u);
+  assert.match(historySchema, /userId/u);
+  assert.match(history.description, /私聊或群聊/u);
+  assert.match(history.description, /时间范围/u);
 });

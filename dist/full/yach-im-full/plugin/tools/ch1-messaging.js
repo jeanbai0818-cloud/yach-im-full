@@ -13,6 +13,7 @@
  *   yach_get_status      — yach-im-full NIM 连接状态
  */
 import { Type } from "typebox";
+import { queryHistory } from "../../../history-query.js";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { formatMessageBody } = require("../../utils/message-content.js");
@@ -89,10 +90,15 @@ export const yachGetHistory = {
         sessionId: Type.Optional(Type.String({ description: "会话 ID，格式 p2p:{userId} 或 team:{teamId}，优先于 userId" })),
         groupName: Type.Optional(Type.String({ description: "群名称；未传 sessionId/groupTid 时，先搜索精确群名并解析 tid" })),
         groupTid: Type.Optional(Type.String({ description: "群 tid（网易云信 teamId），自动转为 team:{groupTid}" })),
-        limit: Type.Optional(Type.Integer({ description: "返回条数，默认 20，最大 100", default: 20, minimum: 1, maximum: 100 })),
+        limit: Type.Optional(Type.Integer({ description: "最近 N 条匹配消息，默认20，最大1000；自动云端分页", default: 20, minimum: 1, maximum: 1000 })),
+        startTime: Type.Optional(Type.Integer({ minimum: 0, description: "时间段起点，Unix毫秒时间戳" })),
+        endTime: Type.Optional(Type.Integer({ minimum: 1, description: "时间段终点，Unix毫秒时间戳；默认当前时间" })),
+        lastMsgId: Type.Optional(Type.String({ description: "nextCursor.lastMsgId；续查时保持相同时间段与筛选" })),
+        maxPages: Type.Optional(Type.Integer({ minimum: 1, maximum: 100, default: 20, description: "最多扫描页数；达到上限返回续查游标" })),
+        senderKind: Type.Optional(Type.Union([Type.Literal("all"), Type.Literal("bot"), Type.Literal("human"), Type.Literal("unknown")], { description: "发送者身份筛选；仅依据明确身份字段，Server或custom不证明机器人身份" })),
         beforeTime: Type.Optional(Type.Integer({ description: "只返回此时间戳（毫秒）之前的消息，用于翻页" })),
     }),
-    async execute(_id, params) {
+    async execute(_id, params, signal) {
         const { userId, sessionId, groupName, groupTid, limit = 20, beforeTime } = params;
         let sid = sessionId ?? (groupTid ? `team:${groupTid}` : null) ?? (userId ? `p2p:${userId}` : null);
         let resolvedGroupName = groupName;
@@ -100,8 +106,9 @@ export const yachGetHistory = {
             const ch2 = require("../../api/ch2-groups/index.js");
             const searchResult = await ch2.searchGroup(groupName, { pagesize: 20 });
             const candidates = Array.isArray(searchResult?.list) ? searchResult.list : [];
-            const exact = candidates.find((item) => String(item?.name ?? item?.group_name ?? "").trim() === groupName.trim())
-                ?? candidates[0];
+            const matches = candidates.filter((item) => String(item?.name ?? item?.group_name ?? "").trim() === groupName.trim());
+            if (matches.length !== 1) throw new Error("群名未唯一精确匹配，请指定 groupTid：" + JSON.stringify(candidates.map(item => ({ name: item.name, tid: item.tid }))));
+            const exact = matches[0];
             const tid = exact?.tid ?? exact?.teamId ?? exact?.team_id;
             if (!tid)
                 throw new Error(`未找到可用的知音楼群组「${groupName}」，无法查询云端历史`);
@@ -111,10 +118,8 @@ export const yachGetHistory = {
         if (!sid)
             throw new Error("需要 userId、sessionId、groupTid 或 groupName");
         const messaging = require("../../api/ch1-messaging/index.js");
-        const msgs = await messaging.getHistory({ sessionId: sid, limit, endTime: beforeTime });
-        if (!msgs.length) {
-            return toolResult(`${resolvedGroupName ? `群组「${resolvedGroupName}」（${sid}）` : `会话 ${sid}`} 没有查到云端历史消息`);
-        }
+        const result = await queryHistory(options => messaging.getHistory({ sessionId: sid, ...options }), params, signal);
+        const msgs = [...result.messages].sort((a, b) => a.time - b.time);
         const lines = msgs.map((m) => {
             const t = new Date(m.time).toLocaleString("zh-CN");
             const body = formatMessageBody(m, { maxLength: 2_000 });
@@ -123,13 +128,33 @@ export const yachGetHistory = {
                 `timeMs=${m.time}`,
                 `scene=${m.scene}`,
                 `from=${m.from}`,
+                `fromNick=${m.fromNick || ""}`,
+                `fromClientType=${m.fromClientType || ""}`,
+                `deliveryKind=${m.deliveryKind || ""}`,
+                `senderKind=${m.senderKind}`,
+                `type=${m.type}`,
                 `to=${m.to}`,
                 `idServer=${m.idServer || m.id || ""}`,
                 `idClient=${m.idClient || ""}`,
                 body,
             ].join("  ");
         });
-        return toolResult(`${resolvedGroupName ? `群组「${resolvedGroupName}」（${sid}）` : `会话 ${sid}`} 最近 ${msgs.length} 条云端消息：\n\n${lines.join("\n")}`);
+        const detailMessages = msgs.map((m) => ({
+            idServer: m.idServer,
+            time: m.time,
+            from: m.from,
+            fromNick: m.fromNick,
+            fromClientType: m.fromClientType,
+            deliveryKind: m.deliveryKind,
+            type: m.type,
+            senderKind: m.senderKind,
+            senderKindSource: m.senderKindSource,
+            body: formatMessageBody(m, { maxLength: 2_000 }),
+        }));
+        return {
+            content: [{ type: "text", text: `${resolvedGroupName ? `群组「${resolvedGroupName}」（${sid}）` : `会话 ${sid}`} 查询到 ${msgs.length} 条云端消息：\n\n${lines.join("\n")}\n${result.warnings.join("\n")}\nnextCursor=${JSON.stringify(result.nextCursor)}` }],
+            details: { ...result, sessionId: sid, messages: detailMessages },
+        };
     },
 };
 /**
