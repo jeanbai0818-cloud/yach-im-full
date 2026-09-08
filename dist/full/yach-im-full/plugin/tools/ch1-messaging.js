@@ -17,6 +17,39 @@ import { queryHistory } from "../../../history-query.js";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { formatMessageBody } = require("../../utils/message-content.js");
+const { loadSession } = require("../../../auth/session.cjs");
+const nimBridge = require("../../../nim-bridge.cjs");
+
+function historyError(code, message, details = {}) {
+    const error = new Error("[" + code + "] " + message);
+    error.code = code;
+    error.details = { source: "nim-cloud", status: "error", reasonCode: code, ...details };
+    return error;
+}
+
+function requireNimCredential() {
+    let session;
+    try {
+        session = loadSession();
+    }
+    catch (error) {
+        throw historyError("YACH_HISTORY_AUTH_STATE_ERROR", "无法读取 NIM 登录态：" + error.message);
+    }
+    if (!session?.user?.id || !session?.cloudtoken) {
+        throw historyError("YACH_HISTORY_NOT_AUTHENTICATED", "NIM 尚未登录或缺少 cloudtoken，请先执行 /yach_login。", { nimConnected: false });
+    }
+    return session;
+}
+
+function wrapHistoryFailure(error, details = {}) {
+    if (error?.code?.startsWith?.("YACH_HISTORY_"))
+        return error;
+    const message = String(error?.message ?? error);
+    if (/NIM service listener is not registered|NIM 未连接|connect timeout|NIM disconnect|service connect timeout/iu.test(message)) {
+        return historyError("YACH_HISTORY_NOT_CONNECTED", "NIM 登录态存在，但 NIM 长连接当前未连接；请稍后重试或重启 Gateway。", { nimConnected: false, cause: message, ...details });
+    }
+    return historyError("YACH_HISTORY_QUERY_FAILED", "云端历史查询失败：" + message, details);
+}
 function toolResult(text) {
     return { content: [{ type: "text", text }], details: null };
 }
@@ -100,25 +133,46 @@ export const yachGetHistory = {
     }),
     async execute(_id, params, signal) {
         const { userId, sessionId, groupName, groupTid, limit = 20, beforeTime } = params;
+        const session = requireNimCredential();
         let sid = sessionId ?? (groupTid ? `team:${groupTid}` : null) ?? (userId ? `p2p:${userId}` : null);
-        let resolvedGroupName = groupName;
+        let resolvedGroupName;
         if (!sid && groupName) {
+            if (!session.token || !session.accesstoken) {
+                throw historyError("YACH_HISTORY_HTTP_AUTH_REQUIRED", "NIM 已登录，但按群名查找需要 HTTP/CAPI 登录态；请先执行 /yach_login，或直接提供 groupTid/sessionId。", { nimConnected: Boolean(nimBridge.getActiveNim()), groupName });
+            }
             const ch2 = require("../../api/ch2-groups/index.js");
-            const searchResult = await ch2.searchGroup(groupName, { pagesize: 20 });
+            let searchResult;
+            try {
+                searchResult = await ch2.searchGroup(groupName, { pagesize: 20 });
+            }
+            catch (error) {
+                throw wrapHistoryFailure(error, { stage: "group_lookup", groupName });
+            }
             const candidates = Array.isArray(searchResult?.list) ? searchResult.list : [];
             const matches = candidates.filter((item) => String(item?.name ?? item?.group_name ?? "").trim() === groupName.trim());
-            if (matches.length !== 1) throw new Error("群名未唯一精确匹配，请指定 groupTid：" + JSON.stringify(candidates.map(item => ({ name: item.name, tid: item.tid }))));
+            if (matches.length === 0) {
+                throw historyError("YACH_HISTORY_GROUP_NOT_FOUND", "未找到群组「" + groupName + "」；这表示群名查找没有匹配结果，不是 NIM 未登录。", { groupName, candidates: candidates.slice(0, 10).map((item) => ({ name: item.name ?? item.group_name, tid: item.tid })) });
+            }
+            if (matches.length > 1) {
+                throw historyError("YACH_HISTORY_GROUP_AMBIGUOUS", "群名「" + groupName + "」有多个精确匹配，请指定 groupTid。", { groupName, candidates: matches.map((item) => ({ name: item.name ?? item.group_name, tid: item.tid })) });
+            }
             const exact = matches[0];
             const tid = exact?.tid ?? exact?.teamId ?? exact?.team_id;
             if (!tid)
-                throw new Error(`未找到可用的知音楼群组「${groupName}」，无法查询云端历史`);
+                throw historyError("YACH_HISTORY_GROUP_NOT_FOUND", "群组「" + groupName + "」没有可用 tid，无法查询云端历史。", { groupName });
             sid = `team:${tid}`;
             resolvedGroupName = exact?.name ?? exact?.group_name ?? groupName;
         }
         if (!sid)
-            throw new Error("需要 userId、sessionId、groupTid 或 groupName");
+            throw historyError("YACH_HISTORY_TARGET_REQUIRED", "需要 userId、sessionId、groupTid 或 groupName。", { nimConnected: Boolean(nimBridge.getActiveNim()) });
         const messaging = require("../../api/ch1-messaging/index.js");
-        const result = await queryHistory(options => messaging.getHistory({ sessionId: sid, ...options }), params, signal);
+        let result;
+        try {
+            result = await queryHistory(options => messaging.getHistory({ sessionId: sid, ...options }), params, signal);
+        }
+        catch (error) {
+            throw wrapHistoryFailure(error, { sessionId: sid, groupName: resolvedGroupName });
+        }
         const msgs = [...result.messages].sort((a, b) => a.time - b.time);
         const lines = msgs.map((m) => {
             const t = new Date(m.time).toLocaleString("zh-CN");
@@ -151,9 +205,10 @@ export const yachGetHistory = {
             senderKindSource: m.senderKindSource,
             body: formatMessageBody(m, { maxLength: 2_000 }),
         }));
+        const historyStatus = msgs.length > 0 ? "ok" : "empty";
         return {
             content: [{ type: "text", text: `${resolvedGroupName ? `群组「${resolvedGroupName}」（${sid}）` : `会话 ${sid}`} 查询到 ${msgs.length} 条云端消息：\n\n${lines.join("\n")}\n${result.warnings.join("\n")}\nnextCursor=${JSON.stringify(result.nextCursor)}` }],
-            details: { ...result, sessionId: sid, messages: detailMessages },
+            details: { ...result, status: historyStatus, reasonCode: historyStatus === "empty" ? "YACH_HISTORY_EMPTY" : null, sessionId: sid, groupName: resolvedGroupName, messages: detailMessages },
         };
     },
 };

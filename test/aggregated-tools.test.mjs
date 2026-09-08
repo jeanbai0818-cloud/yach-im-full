@@ -42,4 +42,5 @@ test("aggregate schemas use finite action branches", () => {
   assert.match(historySchema, /userId/u);
   assert.match(history.description, /私聊或群聊/u);
   assert.match(history.description, /时间范围/u);
+  assert.match(history.description, /立即使用此工具执行查询/u);
 });

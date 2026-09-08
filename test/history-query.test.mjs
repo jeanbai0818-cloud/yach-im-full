@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { queryHistory, classifySender } from '../dist/full/history-query.js';
+const { yachGetHistory } = await import('../dist/full/yach-im-full/plugin/tools/ch1-messaging.js');
 
 test('cloud pagination preserves timestamp ties through server IDs', async () => {
   const source = Array.from({length: 205}, (_, i) => ({ idServer: String(i+1), time: 5000 - Math.floor(i / 50), isBot: i % 2 === 0 }));
@@ -32,4 +33,13 @@ test('invalid ranges fail before requesting cloud data and scan bounds are expli
   assert.equal(result.exhausted,false);
   assert.ok(result.warnings.length);
   assert.ok(result.nextCursor);
+});
+
+test('history tool reports missing NIM authentication separately from an empty result', async () => {
+  await assert.rejects(
+    yachGetHistory.execute('no-auth', { userId: '438470', limit: 1 }),
+    error => error?.code === 'YACH_HISTORY_NOT_AUTHENTICATED'
+      && /NIM 尚未登录/u.test(error.message)
+      && !/没有查到/u.test(error.message),
+  );
 });

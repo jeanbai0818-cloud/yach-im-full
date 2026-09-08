@@ -102,6 +102,8 @@ test("group history is cloud-backed and auto-response uses aggregate read tools"
   const responderSource = await fs.readFile(new URL("../dist/full/yach-im-full/daemon/auto-responder.js", import.meta.url), "utf8");
   assert.match(historySource, /groupName/u);
   assert.match(historySource, /searchGroup/u);
+  assert.match(historySource, /YACH_HISTORY_NOT_AUTHENTICATED/u);
+  assert.match(historySource, /YACH_HISTORY_GROUP_NOT_FOUND/u);
   assert.doesNotMatch(historySource, /messages\.db/u);
   assert.match(responderSource, /yach_message_history/u);
   assert.doesNotMatch(responderSource, /['"]yach_get_history['"]/u);

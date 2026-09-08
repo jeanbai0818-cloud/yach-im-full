@@ -10,7 +10,7 @@ const legacyToolsByName = new Map(legacyTools.map((tool) => [tool.name, tool]));
 const AGGREGATES = [
     ["yach_private_chat", "messaging", "私聊消息", "发送或撤回知音楼私聊消息。"],
     ["yach_group_chat", "messaging", "群聊消息", "发送群文本、@消息、卡片、投票或机器人消息。"],
-    ["yach_message_history", "messaging", "消息历史", "查询私聊或群聊的 NIM 云端历史消息；支持按 userId、sessionId、groupTid 或 groupName 选择会话，按最近 N 条、时间范围、发送者身份筛选，并通过 nextCursor 继续分页。"],
+    ["yach_message_history", "messaging", "消息历史", "直接查询私聊或群聊的 NIM 云端历史消息；用户询问能否读取某个会话时，应立即使用此工具执行查询，不要只回答能力说明。支持按 userId、sessionId、groupTid 或 groupName 选择会话，按最近 N 条、时间范围、发送者身份筛选，并通过 nextCursor 继续分页。"],
     ["yach_message_search", "messaging", "消息搜索", "搜索知音楼消息和敏感消息。"],
     ["yach_conversations", "messaging", "会话管理", "查询会话、未读和会话置顶配置。"],
     ["yach_connection_status", "messaging", "连接状态", "查询 yach-im-full 的 NIM 连接状态。"],

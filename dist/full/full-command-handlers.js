@@ -158,13 +158,18 @@ export async function handleStatus() {
     const credentials = credentialSummary();
     const login = loginState.running
         ? "🔄 登录进行中（等待扫码/确认）"
-        : loginState.result || (loginState.error ? `❌ 上次登录失败：${loginState.error}` : "登录状态：未发起");
+        : loginState.result
+            || (loginState.error ? `❌ 上次登录失败：${loginState.error}`
+                : credentials.nimReady && credentials.httpPresent ? "登录状态：已有 NIM 与 HTTP/CAPI 登录态"
+                    : credentials.nimReady ? "登录状态：已有 NIM 登录态（HTTP/CAPI 登录未发起）"
+                        : "登录状态：未发起");
     return {
         text: [
             login,
             `NIM 服务：${status.serviceRunning ? "✅ 已运行" : "❌ 未运行"}`,
             `NIM 账号：${status.accountId || "-"}`,
             `NIM 长连接：${status.connected ? "✅ 已连接" : "❌ 未连接"}`,
+            `NIM 登录态：${credentials.nimReady ? "✅ 已保存" : "❌ 缺失"}`,
             `HTTP/CAPI 凭据：${credentials.httpPresent ? "✅ 已保存（有效性需实际调用确认）" : "❌ 缺失"}`,
             credentials.tokenUpdatedAt ? `HTTP/CAPI 最后保存：${new Date(credentials.tokenUpdatedAt).toISOString()}` : "HTTP/CAPI 最后保存：-",
             "Channel SDK 机器人连接仍由 yach-im-full 通道独立维护。",
