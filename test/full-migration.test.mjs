@@ -7,17 +7,21 @@ import { pathToFileURL } from "node:url";
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const manifest = JSON.parse(await fs.readFile(path.join(root, "openclaw.plugin.json"), "utf8"));
 const capabilityMap = await fs.readFile(path.join(root, "docs/CAPABILITY-MAP.md"), "utf8");
+const migrationMap = await fs.readFile(path.join(root, "docs/TOOL-MIGRATION-MAP.md"), "utf8");
 const { fullTools, fullToolNames, optionalToolNames, sideEffectingToolNames } =
   await import("../dist/full/full-tools.js");
+const { legacyToolMapping } = await import("../dist/full/aggregated-tools.js");
 
-test("full migration exports the complete unique 284-tool registry", () => {
-  assert.equal(fullTools.length, 284);
-  assert.equal(new Set(fullToolNames).size, 284);
-  assert.equal(new Set(manifest.contracts.tools).size, 284);
-  assert.equal(Object.keys(manifest.toolMetadata ?? {}).length, 284);
-  assert.equal(optionalToolNames.size, 284);
-  assert.match(capabilityMap, /Active tools: \*\*284\*\*/u);
-  assert.match(capabilityMap, /Optional tools: \*\*284\*\*/u);
+test("public registry exposes aggregate tools while retaining all 284 internal mappings", () => {
+  assert.equal(fullTools.length, 30);
+  assert.equal(new Set(fullToolNames).size, 30);
+  assert.equal(new Set(manifest.contracts.tools).size, 30);
+  assert.equal(Object.keys(manifest.toolMetadata ?? {}).length, 30);
+  assert.equal(optionalToolNames.size, 30);
+  assert.equal(Object.keys(legacyToolMapping).length, 284);
+  assert.match(capabilityMap, /Public aggregate tools: \*\*30\*\*/u);
+  assert.match(capabilityMap, /Internal legacy capabilities: \*\*284\*\*/u);
+  assert.match(migrationMap, /Legacy capabilities mapped: \*\*284\*\*/u);
   for (const tool of fullTools) {
     assert.equal(typeof tool.execute, "function", `${tool.name} must be executable`);
     assert.equal(typeof tool.parameters, "object", `${tool.name} must expose parameters`);
@@ -27,7 +31,7 @@ test("full migration exports the complete unique 284-tool registry", () => {
 });
 
 test("every side-effecting migrated tool advertises confirmation", () => {
-  assert.equal(sideEffectingToolNames.size, 133);
+  assert.equal(sideEffectingToolNames.size, 24);
   for (const tool of fullTools.filter((candidate) => sideEffectingToolNames.has(candidate.name))) {
     assert.match(String(tool.description ?? ""), /(确认|授权)/u, `${tool.name} must advertise confirmation`);
     assert.equal(manifest.toolMetadata[tool.name].sideEffecting, true);

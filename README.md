@@ -32,9 +32,9 @@ npm run pack:check
 runtime 入口，并配套 `setupEntry`/`runtimeSetupEntry`。二维码登录、NIM SDK 和浏览器
 兼容层只在 full runtime 或实际执行登录命令时延迟加载。
 
-好未来 Agent 项目的 36 个业务域已全部迁移到 `yach-im-full`：共 284 个唯一 Agent 工具，覆盖即时通信、群组组织、日程会议、文档知识库、文件、考勤、OKR/周报、AI、搜索提醒、企业邮件和开放平台能力；工资条能力未纳入当前插件。
+好未来 Agent 项目的 36 个业务域已全部迁移到 `yach-im-full`：底层保留 284 个唯一能力，公开工具接口收敛为 30 个任务型聚合工具，覆盖即时通信、群组组织、日程会议、文档知识库、文件、考勤、OKR/周报、AI、搜索提醒、企业邮件和开放平台能力；工资条能力未纳入当前插件。
 
-迁移范围包含参考工程 capability map 中的全部 36 个业务域；完整的工具名、来源模块和副作用标记见自动生成的 [`docs/CAPABILITY-MAP.md`](docs/CAPABILITY-MAP.md)。
+迁移范围包含参考工程 capability map 中的全部 36 个业务域；聚合工具与 pack 列表见自动生成的 [`docs/CAPABILITY-MAP.md`](docs/CAPABILITY-MAP.md)，284 个旧能力到新 `action` 的逐项映射见 [`docs/TOOL-MIGRATION-MAP.md`](docs/TOOL-MIGRATION-MAP.md)。这是一次 breaking change，旧的 `yach_*` 工具名不再注册，也不保留兼容 alias。
 
 ## 配置
 
@@ -49,6 +49,7 @@ runtime 入口，并配套 `setupEntry`/`runtimeSetupEntry`。二维码登录、
       dmPolicy: "pairing",
       groupPolicy: "allowlist",
       groupResponseMode: "mentions",
+      toolPacks: ["messaging"],
       requireMention: true,
       allowBots: true,
       chatHistoryEnabled: true,
@@ -102,12 +103,12 @@ openclaw channels status --channel yach-im-full
 
 `yach_punch_on_duty`、`yach_punch_off_duty` 和 `yach_attendance_auth_check` 保留在完整工具集中，但每次都要求调用方显式提供本次真实 `latitude`、`longitude`、`deviceId` 和 `deviceName`；插件只把坐标交给知音楼服务端校验，不生成坐标、不读取主机硬件标识、不构造设备身份。考勤 access_token 只在当前 Gateway 进程内短期复用，不写入本地文件。两种打卡仍属于高风险外部写操作，必须经过 OpenClaw 逐次确认。
 
-## 安装 `2026.9.4-18`
+## 安装 `2026.9.4-19`
 
-手工安装包：`tal-yach-im-full-2026.9.4-18.tgz`。
+手工安装包：`tal-yach-im-full-2026.9.4-19.tgz`。
 
 ```bash
-openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-18.tgz --force --accept-capabilities
+openclaw plugins install /path/to/tal-yach-im-full-2026.9.4-19.tgz --force --accept-capabilities
 openclaw channels add --channel yach-im-full --app-key '<appKey>' --app-secret '<appSecret>'
 openclaw config validate
 openclaw channels list --all
@@ -122,6 +123,21 @@ openclaw plugins doctor
 ```
 
 能力包括 direct/group、文本/Markdown、引用、图片/音频/视频/文件、流式卡片、状态表情、模型选择深链和 shared-message `react`。Yach IM 的表情接口是 toggle-only，无法安全区分删除，因此 `remove: true` 会明确拒绝。
+
+### 工具聚合与分类启用
+
+默认只注册 `messaging` pack 的 6 个聊天核心工具；其余能力通过频道配置显式启用：
+
+```yaml
+channels:
+  yach-im-full:
+    toolPacks:
+      - messaging
+      - groups
+      - calendar
+```
+
+可用 pack 为 `messaging`、`groups`、`mail`、`calendar`、`files`、`work`、`notifications`、`ai`、`platform` 和测试用的 `all`。聚合工具内部使用有限的 `action` 联合 schema，查询 action 不触发写入确认，发送、修改、删除、上传、考勤等写 action 仍逐次确认。所有聚合调用返回统一的 `operation`、`resourceIds`、`warnings`、`serverResult` 和 Yach 映射信息。
 
 生产环境可以只在配置中保留 SecretRef：
 
@@ -177,11 +193,11 @@ openclaw plugins doctor
 openclaw config validate
 ```
 
-预期结果：频道列表显示 `Yach IM Full`，插件 ID 为 `yach-im-full`，配置 schema 的默认 `groupPolicy` 为 `allowlist`、默认 `groupResponseMode` 为 `mentions`，且插件诊断为空。真实凭据探测需要在配置账号后执行；使用占位凭据时出现平台鉴权失败属于探测结果，不是注册错误。
+预期结果：频道列表显示 `Yach IM Full`，插件 ID 为 `yach-im-full`，配置 schema 的默认 `groupPolicy` 为 `allowlist`、默认 `groupResponseMode` 为 `mentions`，默认 `toolPacks` 为 `["messaging"]`，且插件诊断为空。真实凭据探测需要在配置账号后执行；使用占位凭据时出现平台鉴权失败属于探测结果，不是注册错误。
 
 ### 合规运行时约束
 
-- 284 个迁移工具全部保留在 `contracts.tools`；涉及消息发送、组织修改或考勤写卡的工具标记为 `sideEffecting` 并要求显式确认，查询组织/消息/会话等敏感工具要求通过 `tools.allow` 显式启用。
+- `contracts.tools` 只声明 30 个聚合工具；284 个旧能力保留在内部映射层，并由 [`docs/TOOL-MIGRATION-MAP.md`](docs/TOOL-MIGRATION-MAP.md) 逐项记录。高级 pack 默认关闭，查询 action 不触发写入确认，消息发送、组织修改或考勤写卡等 action 要求显式确认。
 - `tool-discovery` 只发布工具能力，不启动 NIM、后台 service 或 HTTP 路由；setup 入口使用 bundled setup contract，不加载 Channel SDK/OAPI/NIM 运行时。
 - 入站消息在进入 OpenClaw context 前经过官方 channel ingress resolver；私聊默认 pairing，群聊默认 allowlist。
 - `/plugin/yach-im-full/*` 路由统一使用 Gateway 认证；二维码登录和登录态只属于 `yach-im-full` 自己的固定状态文件，不读取任何共享 session。

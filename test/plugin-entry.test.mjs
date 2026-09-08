@@ -20,6 +20,6 @@ test("full entry registers the yach-im-full channel, NIM service, tools, and com
   assert.deepEqual(commands, [
     "yach_login", "yach_status", "yach-refresh-token", "yach-response",
   ]);
-  assert.equal(tools.length, 284);
-  assert.equal(new Set(tools).size, 284);
+  assert.equal(tools.length, 6);
+  assert.equal(new Set(tools).size, 6);
 });

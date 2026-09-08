@@ -1,14 +1,33 @@
 # yach-im-full 业务域迁移分析
 
-本文以参考工程 capability map 中 36 个有效工具域为基线，把它们重新归并为 9 大类。参考工程只提供接口、协议和行为依据，`yach-im-full` 运行时不依赖其目录、插件 ID 或 session。
+本文以参考工程 capability map 中 36 个有效工具域为基线，把它们重新归并为 9 个可按需启用的 tool pack。参考工程只提供接口、协议和行为依据，`yach-im-full` 运行时不依赖其目录、插件 ID 或 session。
 
 ## 迁移结论
 
-- 36 个业务域、284 个唯一工具已全部迁移并注册到 `yach-im-full`。
-- 工具名和来源接口保持一致，便于已有 Agent 提示词继续使用；工具契约由 `npm run tools:sync` 自动生成。
+- 36 个业务域、284 个唯一底层能力已全部迁移到 `yach-im-full` 的内部执行层。
+- 公开接口直接切换为 30 个任务型聚合工具；旧 `yach_*` 工具不再注册，不保留兼容 alias。
+- 每个聚合工具使用有限的 `action` 判别联合 schema；逐项映射由 `docs/TOOL-MIGRATION-MAP.md` 自动生成。
+- 默认仅启用 `messaging` pack；其余 pack 通过 `channels.yach-im-full.toolPacks` 显式启用，`all` 仅用于完整迁移验证。
 - API/tool 运行时通过同一个 `NimListener` 复用 NIM SDK 实例，不会因为工具调用再次创建同账号的第二条 NIM 长连接。
 - `/yach_login` 保存 `user.id + cloudtoken` 到 `yach-im-full` 自己的 `nim-session/default` plugin-state 命名空间；缺失时只提示登录，不读取任何共享 session、浏览器、钥匙串或其他插件数据。OKR 换票态单独使用 `okr-session/default` 命名空间。
-- 所有迁移工具默认是 optional；133 个外部副作用工具同时标记为 `sideEffecting`，在执行前由插件权限 hook 要求逐次确认。
+- 所有公开聚合工具默认是 optional；包含写 action 的聚合工具在 manifest 中标记为 `sideEffecting`，运行时再按 action 判断，避免查询 action 误触发写入确认。
+
+## 新旧工具接口
+
+| 层级 | 数量 | 对 Agent 是否可见 | 说明 |
+| --- | ---: | --- | --- |
+| 聚合工具 | 30 | 是 | 以 `yach_private_chat`、`yach_mail`、`yach_calendar` 等任务边界组织，每个工具包含有限 action 分支。 |
+| 旧工具能力 | 284 | 否 | 仍作为底层 API 适配目标保留；名称、pack、action 和参数适配关系见迁移表。 |
+
+频道配置示例：
+
+```yaml
+channels:
+  yach-im-full:
+    toolPacks:
+      - messaging
+      - groups
+```
 
 ## 9 大类与 36 个业务域
 

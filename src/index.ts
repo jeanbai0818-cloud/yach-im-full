@@ -15,6 +15,25 @@ export default defineChannelPluginEntry({
     properties: {
       nimEnabled: { type: "boolean", default: true },
       autoStartNim: { type: "boolean", default: true },
+      toolPacks: {
+        type: "array",
+        default: ["messaging"],
+        items: {
+          type: "string",
+          enum: [
+            "messaging",
+            "groups",
+            "mail",
+            "calendar",
+            "files",
+            "work",
+            "notifications",
+            "ai",
+            "platform",
+            "all",
+          ],
+        },
+      },
       responsePolicy: {
         type: "object",
         additionalProperties: false,

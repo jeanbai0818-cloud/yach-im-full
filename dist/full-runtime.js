@@ -1,5 +1,5 @@
 import { registerFullCommands } from "./full/full-commands.js";
-import { registerFullTools, sideEffectingToolNames } from "./full/full-tools.js";
+import { isSideEffectingAction, registerFullTools } from "./full/full-tools.js";
 import sessionStoreApi from "./full/auth/session.cjs";
 import okrStoreApi from "./full/yach-im-full/api/ch7-workbench/okr/store.js";
 
@@ -76,10 +76,12 @@ function registerFullToolApprovals(api) {
         const isSharedYachMessage = toolName === "message"
             && String(params.channel ?? params.provider ?? "").toLowerCase() === "yach-im-full"
             && ["send", "react", "delete", "edit"].includes(String(params.action ?? "").toLowerCase());
-        if (!sideEffectingToolNames.has(toolName) && !isSharedYachMessage)
+        const aggregateAction = typeof params.action === "string" ? params.action : "";
+        const aggregateWrite = isSideEffectingAction(toolName, aggregateAction);
+        if (!aggregateWrite && !isSharedYachMessage)
             return;
-        const action = isSharedYachMessage ? `message:${String(params.action ?? "send")}` : toolName;
-        const destructive = /(?:dismiss|delete|remove|recall|change_group_owner|set_group_admin|mute_group|quit_group|set_user_info|set_workstate|upload_avatar|del_side_bar_nav|set_side_bar_conf)/i.test(action);
+        const action = isSharedYachMessage ? `message:${String(params.action ?? "send")}` : `${toolName}:${aggregateAction}`;
+        const destructive = /(?:dismiss|delete|remove|recall|change_group_owner|set_group_admin|mute_group|quit_group|set_user_info|set_workstate|upload_avatar|del_side_bar_nav|set_side_bar_conf|punch_)/i.test(action);
         return {
             requireApproval: {
                 title: `允许 Yach IM 操作：${action}`.slice(0, 80),

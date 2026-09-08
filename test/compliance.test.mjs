@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 
 const manifest = JSON.parse(await fs.readFile(new URL("../openclaw.plugin.json", import.meta.url), "utf8"));
 const { fullTools, optionalToolNames, sideEffectingToolNames } = await import("../dist/full/full-tools.js");
+const { getEnabledAggregatedTools } = await import("../dist/full/aggregated-tools.js");
 const { registerFullRuntime } = await import("../dist/full-runtime.js");
 const { resolveYachAccount, inspectYachAccount } = await import("../dist/config.js");
 
@@ -29,12 +30,12 @@ test("tool-discovery registers tools only and never starts NIM or Gateway routes
     registerHttpRoute() { calls.routes += 1; },
     on() { calls.hooks += 1; },
   });
-  assert.equal(calls.tools.length, 284);
+  assert.equal(calls.tools.length, getEnabledAggregatedTools({}).length);
   assert.equal(calls.services, 0);
   assert.equal(calls.commands, 0);
   assert.equal(calls.routes, 0);
   assert.equal(calls.hooks, 0);
-  assert.equal(calls.tools.filter(({ options }) => options?.optional === true).length, optionalToolNames.size);
+  assert.equal(calls.tools.filter(({ options }) => options?.optional === true).length, getEnabledAggregatedTools({}).length);
 });
 
 test("full runtime asks for approval before Yach external side effects", async () => {
@@ -49,11 +50,12 @@ test("full runtime asks for approval before Yach external side effects", async (
     on(event, handler) { hooks.push({ event, handler }); },
   });
   assert.deepEqual(calls.services, ["yach-im-full-nim"]);
-  assert.equal(calls.tools.length, 284);
+  assert.equal(calls.tools.length, getEnabledAggregatedTools({}).length);
   const beforeToolCall = hooks.find((entry) => entry.event === "before_tool_call")?.handler;
   assert.equal(typeof beforeToolCall, "function");
-  assert.ok((await beforeToolCall({ toolName: "yach_send_message", params: {} }))?.requireApproval);
-  assert.equal(await beforeToolCall({ toolName: "yach_get_status", params: {} }), undefined);
+  assert.ok((await beforeToolCall({ toolName: "yach_private_chat", params: { action: "send_message" } }))?.requireApproval);
+  assert.equal(await beforeToolCall({ toolName: "yach_connection_status", params: { action: "get_status" } }), undefined);
+  assert.equal(await beforeToolCall({ toolName: "yach_message_history", params: { action: "get_history" } }), undefined);
   assert.ok((await beforeToolCall({
     toolName: "message",
     params: { channel: "yach-im-full", action: "send" },
