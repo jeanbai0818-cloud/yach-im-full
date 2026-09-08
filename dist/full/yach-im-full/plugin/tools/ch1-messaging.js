@@ -207,7 +207,7 @@ export const yachGetHistory = {
         }));
         const historyStatus = msgs.length > 0 ? "ok" : "empty";
         return {
-            content: [{ type: "text", text: `${resolvedGroupName ? `群组「${resolvedGroupName}」（${sid}）` : `会话 ${sid}`} 查询到 ${msgs.length} 条云端消息：\n\n${lines.join("\n")}\n${result.warnings.join("\n")}\nnextCursor=${JSON.stringify(result.nextCursor)}` }],
+content: [{ type: "text", text: `${resolvedGroupName ? `群组「${resolvedGroupName}」（${sid}）` : `会话 ${sid}`} ${msgs.length === 0 ? "查询成功，但时间范围内没有云端消息。" : "查询到 " + msgs.length + " 条云端消息："}\n\n${lines.join("\n")}\n${result.warnings.join("\n")}\nnextCursor=${JSON.stringify(result.nextCursor)}` }],
             details: { ...result, status: historyStatus, reasonCode: historyStatus === "empty" ? "YACH_HISTORY_EMPTY" : null, sessionId: sid, groupName: resolvedGroupName, messages: detailMessages },
         };
     },
