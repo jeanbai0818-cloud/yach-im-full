@@ -13,14 +13,12 @@ const {
 } = require('./response-policy');
 
 const READ_ONLY_TOOLS = [
-  'yach_get_history',
-  'yach_search_messages',
-  'yach_get_status',
-  'yach_list_sessions',
-  'yach_search_users',
-  'yach_search_groups',
-  'yach_get_group_info',
-  'yach_get_group_users',
+  // The public registry uses aggregate tools. Keep this list read-only at
+  // the aggregate boundary; do not reintroduce legacy yach_* descriptors.
+  'yach_message_history',
+  'yach_message_search',
+  'yach_connection_status',
+  'yach_group_directory',
 ];
 
 function collectReplyText(result) {

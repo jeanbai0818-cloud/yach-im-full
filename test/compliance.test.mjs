@@ -96,3 +96,13 @@ test("inbound dispatch uses the official channel ingress resolver", async () => 
   assert.match(source, /resolveStableChannelMessageIngress/);
   assert.doesNotMatch(source, /channelIngress:\s*["']unsupported["']/);
 });
+
+test("group history is cloud-backed and auto-response uses aggregate read tools", async () => {
+  const historySource = await fs.readFile(new URL("../dist/full/yach-im-full/plugin/tools/ch1-messaging.js", import.meta.url), "utf8");
+  const responderSource = await fs.readFile(new URL("../dist/full/yach-im-full/daemon/auto-responder.js", import.meta.url), "utf8");
+  assert.match(historySource, /groupName/u);
+  assert.match(historySource, /searchGroup/u);
+  assert.doesNotMatch(historySource, /messages\.db/u);
+  assert.match(responderSource, /yach_message_history/u);
+  assert.doesNotMatch(responderSource, /['"]yach_get_history['"]/u);
+});

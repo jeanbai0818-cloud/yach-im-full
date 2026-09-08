@@ -33,4 +33,10 @@ test("aggregate schemas use finite action branches", () => {
   const validator = Compile(chat.parameters);
   assert.equal(validator.Check({ action: "send_message", to: "user-id", content: "hello" }), true);
   assert.equal(validator.Check({ action: "not_a_real_action" }), false);
+
+  const history = aggregatedTools.find((tool) => tool.name === "yach_message_history");
+  assert.ok(history);
+  const historySchema = JSON.stringify(history.parameters);
+  assert.match(historySchema, /groupName/u);
+  assert.match(historySchema, /groupTid/u);
 });

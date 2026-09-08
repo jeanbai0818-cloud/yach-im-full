@@ -82,22 +82,38 @@ export const yachGetHistory = {
     name: "yach_get_history",
     label: "查知音楼历史消息",
     description: "查询与某用户或群组的历史消息（从 NIM 云端，不读取本地消息库）。" +
+        "群聊可以直接传 groupName，插件会通过知音楼群搜索解析 tid 后查询云端历史；也可以直接传 sessionId=team:<tid>。" +
         "需要 NIM 长连接正在运行；群里的自定义卡片、引用回复和富文本会统一解码为可读正文。",
     parameters: Type.Object({
         userId: Type.Optional(Type.String({ description: "用户 user.id，自动转为 p2p:{userId}" })),
         sessionId: Type.Optional(Type.String({ description: "会话 ID，格式 p2p:{userId} 或 team:{teamId}，优先于 userId" })),
+        groupName: Type.Optional(Type.String({ description: "群名称；未传 sessionId/groupTid 时，先搜索精确群名并解析 tid" })),
+        groupTid: Type.Optional(Type.String({ description: "群 tid（网易云信 teamId），自动转为 team:{groupTid}" })),
         limit: Type.Optional(Type.Integer({ description: "返回条数，默认 20，最大 100", default: 20, minimum: 1, maximum: 100 })),
         beforeTime: Type.Optional(Type.Integer({ description: "只返回此时间戳（毫秒）之前的消息，用于翻页" })),
     }),
     async execute(_id, params) {
-        const { userId, sessionId, limit = 20, beforeTime } = params;
-        const sid = sessionId ?? (userId ? `p2p:${userId}` : null);
+        const { userId, sessionId, groupName, groupTid, limit = 20, beforeTime } = params;
+        let sid = sessionId ?? (groupTid ? `team:${groupTid}` : null) ?? (userId ? `p2p:${userId}` : null);
+        let resolvedGroupName = groupName;
+        if (!sid && groupName) {
+            const ch2 = require("../../api/ch2-groups/index.js");
+            const searchResult = await ch2.searchGroup(groupName, { pagesize: 20 });
+            const candidates = Array.isArray(searchResult?.list) ? searchResult.list : [];
+            const exact = candidates.find((item) => String(item?.name ?? item?.group_name ?? "").trim() === groupName.trim())
+                ?? candidates[0];
+            const tid = exact?.tid ?? exact?.teamId ?? exact?.team_id;
+            if (!tid)
+                throw new Error(`未找到可用的知音楼群组「${groupName}」，无法查询云端历史`);
+            sid = `team:${tid}`;
+            resolvedGroupName = exact?.name ?? exact?.group_name ?? groupName;
+        }
         if (!sid)
-            throw new Error("需要 userId 或 sessionId");
+            throw new Error("需要 userId、sessionId、groupTid 或 groupName");
         const messaging = require("../../api/ch1-messaging/index.js");
         const msgs = await messaging.getHistory({ sessionId: sid, limit, endTime: beforeTime });
         if (!msgs.length) {
-            return toolResult(`会话 ${sid} 没有查到云端历史消息`);
+            return toolResult(`${resolvedGroupName ? `群组「${resolvedGroupName}」（${sid}）` : `会话 ${sid}`} 没有查到云端历史消息`);
         }
         const lines = msgs.map((m) => {
             const t = new Date(m.time).toLocaleString("zh-CN");
@@ -113,7 +129,7 @@ export const yachGetHistory = {
                 body,
             ].join("  ");
         });
-        return toolResult(`会话 ${sid} 最近 ${msgs.length} 条消息：\n\n${lines.join("\n")}`);
+        return toolResult(`${resolvedGroupName ? `群组「${resolvedGroupName}」（${sid}）` : `会话 ${sid}`} 最近 ${msgs.length} 条云端消息：\n\n${lines.join("\n")}`);
     },
 };
 /**
