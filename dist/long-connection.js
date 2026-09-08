@@ -63,8 +63,7 @@ export function startYachLongConnection(params) {
     const { account, logger, onMessage, signal } = params;
     const accountId = account.accountId;
     if (!account.appKey || !account.appSecret) {
-        logger.error(`[yach-im-full][${accountId}] appKey/appSecret are required`);
-        return () => undefined;
+        throw new Error(`[yach-im-full][${accountId}] appKey/appSecret are required`);
     }
     if (signal?.aborted)
         return () => undefined;
@@ -75,7 +74,8 @@ export function startYachLongConnection(params) {
     }
     catch (error) {
         logSdkFailure(logger, accountId, error);
-        return () => undefined;
+        // Fatal setup failures must reach the gateway instead of looking running.
+        throw error;
     }
     let channel;
     try {
@@ -89,7 +89,8 @@ export function startYachLongConnection(params) {
     }
     catch (error) {
         logSdkFailure(logger, accountId, error);
-        return () => undefined;
+        // Fatal setup failures must reach the gateway instead of looking running.
+        throw error;
     }
     let stopped = false;
     let reconnectTimer;
